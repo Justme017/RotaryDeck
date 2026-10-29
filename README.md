@@ -1,44 +1,61 @@
 # RotaryDeck
 
-An ESP32-S3 Bluetooth rotary controller with an ST7920 128x64 LCD, encoder navigation, media controls, and a Windows PC companion.
+A Bluetooth rotary controller with a graphical LCD, encoder-driven menus, media controls, and a Windows PC companion.
 
-## Current project
+## Platform status
 
-The v2.2 work includes an animated category carousel, centred position dots, media controls, PC-synchronised time and media information, actual Windows output-volume telemetry, a saved 12/24-hour clock option, and a dashboard date display. The BLE keyboard reconnect patch was reported working on the owner's device; this is not a claim of broad hardware validation.
-
-## Downloads and version archives
-
-Open [Releases](https://github.com/Justme017/RotaryDeck/releases). The repository owner will attach the version ZIPs manually. Draft releases are placeholders until files and notes are reviewed. No firmware is included in this initial repository setup.
-
-| Draft | Intended upload |
+| Platform | Status |
 |---|---|
-| v1.0 | RotaryDeck_v1_complete.zip |
-| v1.2 | RotaryDeck_v1_2_modular.zip |
-| v2.0 | RotaryDeck_v2_0.zip |
-| v2.1 | RotaryDeck_v2_1_firmware.zip and the compatible PC companion |
-| v2.2 | Latest working firmware, corrected PC companion, and reconnect patch |
+| Seeed Studio XIAO ESP32-S3 | Platform for all current v1.0–v2.2 archives |
+| nRF52840 | Planned platform for the final version; no supported port or downloadable build yet |
 
-The dashboard/date ZIP contains replacement headers, not a complete standalone project. The reconnect ZIP modifies the installed BLE Keyboard library, not the sketch folder. For v2.2, upload the complete working set or clearly document how its component archives combine. Exclude .venv, caches, logs and credentials.
+Do not flash the ESP32-S3 archives to an nRF52840 board. The exact nRF52840 board, pinout, BLE implementation and release version remain to be established.
 
-These archive releases do not reconstruct historical Git commits. Tags created by the setup workflow target the setup commit; GitHub's automatic source-code archives are NOT substitutes for the manually uploaded firmware ZIPs.
+## Features developed in v2.2
 
-## Upload files
+- Animated category carousel with centred position dots.
+- Media controls, volume adjustment, mute and configurable encoder behaviour.
+- Windows companion for time, media information and default-output volume telemetry.
+- Dashboard date and saved 12/24-hour clock selection.
+- Local BLE Keyboard reconnect patch, reported working on the owner's device.
 
-1. Open Releases after the setup workflow finishes.
-2. Edit the appropriate draft and attach its ZIP files.
-3. Review the version, contents, installation notes, dependency versions and test status.
-4. Publish only when the draft is complete. Keep unverified builds marked as pre-releases where appropriate.
+Features describe the development line; check the contents of each download. An archive's existence is not a claim of full hardware validation. HID commands and PC-to-deck telemetry are separate paths: a working clock does not prove media-key delivery.
 
-Latest editable source can also be added using Add file > Upload files on the repository Code page. Keep the Arduino sketch folder name matched to its .ino filename.
+## Downloads
 
-## Build context
+Open [Releases](https://github.com/Justme017/RotaryDeck/releases) while signed in to see drafts. Current entries remain drafts until the owner verifies the files and publishes them. This repository currently provides documentation and release packaging; the editable firmware tree has not been imported into main.
 
-The supplied project targets Seeed XIAO ESP32-S3, Arduino-ESP32 2.0.17, U8g2, and T-vK ESP32 BLE Keyboard 0.3.0 with the local reconnect patch. Confirm dependencies against the selected version before compiling. The Windows companion has its own requirements.txt and is separate from the Bluetooth HID controls.
+| Version | Platform | Archive role |
+|---|---|---|
+| v1.0 | XIAO ESP32-S3 | Initial archived firmware and optional Windows helper |
+| v1.2 | XIAO ESP32-S3 | Modular archived sketch and headers |
+| v2.0 | XIAO ESP32-S3 | Historical firmware snapshot |
+| v2.1 | XIAO ESP32-S3 | Historical firmware; companion packaged separately |
+| v2.2 | XIAO ESP32-S3 | Current development line; verify complete firmware, corrected companion and reconnect patch are included |
 
-## Licensing
+Use the manually uploaded firmware ZIPs, not GitHub's automatic Source code archives. The current release tags identify archive entries at the repository setup commit, not reconstructed historical source commits. Dashboard/date and reconnect packages can be incremental patches rather than standalone projects.
 
-A licence for the original project has not yet been selected. Third-party library code remains subject to its upstream licence; retain and verify its notices before redistribution.
+## Getting started
 
-## Setup workflow
+1. Choose an archive matching XIAO ESP32-S3 and inspect its README.
+2. Follow [installation](docs/INSTALLATION.md), including the local reconnect-library patch where required.
+3. Verify and upload the Arduino sketch.
+4. For live time/media/volume, install and run the matching Windows companion.
 
-The Create draft archive releases workflow runs when first added and can also be run manually from Actions. It creates only missing drafts and does not publish releases, upload assets, or change firmware. If Actions is disabled or permissions block it, inspect the workflow error; no releases should be assumed created until verified.
+Build context for the supplied ESP32-S3 project: Arduino-ESP32 2.0.17, U8g2, and T-vK ESP32 BLE Keyboard 0.3.0 with the documented local reconnect patch. Confirm requirements for your selected archive. Never copy .venv, logs, secrets or machine-specific Python environments into a distribution.
+
+## Documentation
+
+- [Changelog](CHANGELOG.md)
+- [Installation and troubleshooting](docs/INSTALLATION.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Licensing and third-party notices](docs/LICENSING.md)
+
+## Licence
+
+Original work owned by the project maintainer is offered under the [MIT License](LICENSE). Third-party code is not relicensed by this statement. In particular, verify the BLE Keyboard code's provenance and applicable upstream terms before redistributing a combined archive.
+
+## Validation status
+
+The owner reported successful reconnect testing on their device. No claim is made that all historical archives, the consolidated v2.2 package, or an nRF52840 port have passed complete hardware testing.

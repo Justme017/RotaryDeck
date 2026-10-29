@@ -1,0 +1,27 @@
+name: Refresh draft release notes
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/refresh-release-notes.yml
+      - .github/scripts/refresh_release_notes.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotarydeck-release-note-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refresh existing drafts and preserve downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 .github/scripts/refresh_release_notes.py
