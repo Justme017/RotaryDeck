@@ -1,0 +1,41 @@
+name: Create draft archive releases
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/create-draft-releases.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotarydeck-draft-release-setup
+  cancel-in-progress: false
+
+jobs:
+  create-drafts:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TARGET_SHA: ${{ github.sha }}
+    steps:
+      - name: Create missing draft releases without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tag in v1.0 v1.2 v2.0 v2.1 v2.2; do
+            if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+              echo "Release $tag already exists; leaving it unchanged."
+              continue
+            fi
+            notes=$(mktemp)
+            printf '%s\n' "# RotaryDeck $tag — archive upload pending" "" "Draft placeholder. The owner will upload the version files manually before publication." "" "No firmware assets are attached yet. Do not treat this draft as a complete or tested distribution." "" "This tag targets the repository setup commit, not the historical firmware source. Use the manually attached version ZIPs, not the automatic Source code ZIP/tar archives." "" "Before publishing: attach the correct files, document dependencies and installation, verify third-party licence notices, and state actual testing status." > "$notes"
+            if [ "$tag" = v2.2 ]; then
+              printf '%s\n' "" "Expected components: current working firmware with dashboard/date and clock-format settings, corrected Windows volume-sync companion, and BLE keyboard reconnect patch. The reconnect fix was reported working by the owner; the full packaged set still requires review." >> "$notes"
+            fi
+            gh release create "$tag" --repo "$GH_REPO" --target "$TARGET_SHA" --title "RotaryDeck $tag" --notes-file "$notes" --draft
+            rm -f "$notes"
+          done
