@@ -4,6 +4,8 @@
 
 Repurpose an Ender 3 display into a wireless DIY stream deck: animated menus, a rotary encoder, media controls, and live PC information.
 
+> REQUIRED: Arduino-ESP32 board package 2.0.17 exactly. Do not upgrade the ESP32 core for current releases. Other core versions are unsupported until the BLE implementation is deliberately migrated and validated. See [compatibility policy](docs/COMPATIBILITY.md).
+
 Private work in progress. No public launch until the [launch checklist](docs/LAUNCH_CHECKLIST.md) is reviewed and completed.
 
 ## Current prototype
@@ -16,7 +18,7 @@ Private work in progress. No public launch until the [launch checklist](docs/LAU
 
 | Platform | Status |
 |---|---|
-| XIAO ESP32-S3 | Current v1.0–v2.2 archive platform |
+| XIAO ESP32-S3 | Current v1.0–v2.2 archives; Arduino-ESP32 2.0.17 required |
 | nRF52840 | Planned final hardware; port and exact board pending |
 | Windows | Existing sync script; graphical configuration app pending |
 | Linux / macOS | Not implemented or supported yet |

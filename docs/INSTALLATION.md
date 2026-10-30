@@ -1,17 +1,25 @@
 # Installation and troubleshooting
 
+## Mandatory ESP32 core version
+
+Install the esp32 board package by Espressif Systems at version 2.0.17 exactly. This is the Arduino-ESP32 board-support package, not the Arduino IDE version, firmware version or microcontroller model.
+
+Current ESP32 releases support only 2.0.17. Do not choose latest, another 2.x version, or 3.x. Other versions are unsupported until the project intentionally upgrades and validates the BLE implementation. Creating or adopting a replacement BLE library alone does not establish compatibility; validation and an explicit support-policy update are required.
+
+Select 2.0.17 in Arduino IDE's Boards Manager and check the installed version before compiling. Do not upgrade the core or switch BLE backends as a generic troubleshooting step. See [COMPATIBILITY.md](COMPATIBILITY.md).
+
 ## Supported archive platform
 
-All current version archives are for Seeed Studio XIAO ESP32-S3. nRF52840 is a future target, not a supported board in these downloads.
+All current version archives are for Seeed Studio XIAO ESP32-S3. nRF52840 is a future target, not a supported board in these downloads. Its eventual board/core requirements will be documented separately.
 
 ## Firmware
 
 1. Back up your working sketch and library files.
 2. Download the manually attached version ZIP from Releases and extract it.
 3. Open the .ino from its matching folder. Do not rename only the sketch or only the folder.
-4. For the supplied v2.x project, use its documented Arduino-ESP32 2.0.17, U8g2 and BLE Keyboard dependencies.
+4. Confirm Arduino-ESP32 is exactly 2.0.17. Use U8g2 and the matching BLE Keyboard dependencies; the current v2.2 setup uses T-vK ESP32 BLE Keyboard 0.3.0 with the local reconnect patch.
 5. If your release includes replacement DeckCore.h/DisplayUI.h headers, put them into the sketch folder.
-6. If it includes the BLE reconnect patch, replace the library files in the installed BLE Keyboard library folder, NOT the sketch folder. Back up that library outside Arduino's libraries directory to avoid duplicate copies.
+6. If it includes the BLE reconnect patch, apply it to the installed BLE Keyboard library, NOT the sketch folder. Back up that library outside Arduino's libraries directory to avoid duplicate copies. A fingerprint-checked patcher must not be forced onto an unfamiliar library version.
 7. Verify, then upload with your known-working board and port settings.
 
 No universal connector pinout is provided here. Verify electrical connections against the actual board and selected source.
@@ -24,6 +32,7 @@ The latest companion uses Windows Runtime APIs and Pycaw for default-output volu
 
 ## Acceptance checks
 
+- Confirm the installed Arduino-ESP32 core is 2.0.17.
 - Volume, mute, track and play/pause controls affect the PC.
 - PC time/media/volume telemetry arrives independently of HID commands.
 - Reconnection works after power cycles with the companion stopped and running.
@@ -32,6 +41,7 @@ The latest companion uses Windows Runtime APIs and Pycaw for default-output volu
 
 ## Troubleshooting
 
+- Check core 2.0.17 and the intended library folder before investigating compilation or BLE regressions.
 - COMMAND SENT only indicates a send attempt; verify that the PC responds.
 - Connected Bluetooth does not itself prove HID input is ready.
 - Missing telemetry: keep the companion window open and inspect its error/log.
