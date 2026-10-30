@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "profile_name": "Default",
+  "apps": [
+    { "slot": 1, "label": "OBS", "type": "open_app", "target": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe" },
+    { "slot": 2, "label": "NETFLIX", "type": "open_url", "target": "https://www.netflix.com" },
+    { "slot": 3, "label": "FILES", "type": "open_folder", "target": "C:\\Users\\Public" },
+    { "slot": 4, "label": "SPOTIFY", "type": "open_app", "target": "spotify:" },
+    { "slot": 5, "label": "GITHUB", "type": "open_url", "target": "https://github.com" },
+    { "slot": 6, "label": "SETTINGS", "type": "builtin", "builtin_action": "open_settings" }
+  ],
+  "actions": [
+    { "slot": 1, "label": "MUTE", "type": "builtin", "builtin_action": "toggle_mute" },
+    { "slot": 2, "label": "PLAY", "type": "builtin", "builtin_action": "play_pause" },
+    { "slot": 3, "label": "NEXT", "type": "builtin", "builtin_action": "next_track" },
+    { "slot": 4, "label": "PREV", "type": "builtin", "builtin_action": "previous_track" },
+    { "slot": 5, "label": "SHOT", "type": "builtin", "builtin_action": "screenshot" },
+    { "slot": 6, "label": "VOL+", "type": "builtin", "builtin_action": "volume_up" }
+  ]
+}
