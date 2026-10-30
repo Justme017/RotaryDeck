@@ -1,1 +1,9 @@
-FULL_REAL_TEST_RESULTS_CONTENT
+Correction revision status: NOT YET EXECUTED.
+
+The actual source and 15 automated tests are included in this commit. No passing result is claimed for this exact revision. Prior generated builds had passing tests, but those results cannot be transferred to changed source.
+
+Run from control_centre:
+python -m unittest -v test_model.py
+python -m py_compile model.py app.py test_model.py
+
+Then perform a fresh Windows GUI smoke test. Physical BLE sync, firmware compilation, NVS persistence, display rendering and deck activation are not implemented or tested by this editor suite.
