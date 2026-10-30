@@ -1,9 +1,11 @@
-Correction revision status: NOT YET EXECUTED.
+Correction revision status: PENDING EXECUTION.
 
-The actual source and 15 automated tests are included in this commit. No passing result is claimed for this exact revision. Prior generated builds had passing tests, but those results cannot be transferred to changed source.
+This file documents the exact committed correction revision. It does not claim a passing result until the commands below have been run against this exact source.
 
 Run from control_centre:
-python -m unittest -v test_model.py
 python -m py_compile model.py app.py test_model.py
+python -m unittest -v test_model.py
 
-Then perform a fresh Windows GUI smoke test. Physical BLE sync, firmware compilation, NVS persistence, display rendering and deck activation are not implemented or tested by this editor suite.
+Then perform a fresh Windows GUI smoke test: edit, save/reload, overwrite and inspect backup, reject invalid input, cancel unsaved navigation, deliberately open a URL/folder, and confirm Sync remains disabled.
+
+Physical BLE sync, firmware compilation, NVS persistence, display rendering and deck activation are not implemented or tested by this editor suite.
