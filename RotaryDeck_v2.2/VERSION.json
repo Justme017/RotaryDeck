@@ -1,0 +1,12 @@
+{
+  "project": "RotaryDeck",
+  "version": "2.2",
+  "package_type": "consolidated-source",
+  "target": "Seeed Studio XIAO ESP32-S3",
+  "companion_platform": "Windows",
+  "packaging_date": "2026-10-30",
+  "compiled_firmware_included": false,
+  "new_hardware_acceptance_test": false,
+  "nrf52840_supported": false,
+  "custom_slot_editor_implemented": false
+}

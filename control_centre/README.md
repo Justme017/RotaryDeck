@@ -14,12 +14,18 @@ The suggested directory is %APPDATA%/RotaryDeck/profiles. Save as may select ano
 
 Load/import changes the editor only. Later Save overwrites the selected file with a backup; use Save as to preserve the imported original. Unsaved edits require discard confirmation before load, restore or close. Loading, restoring, importing and saving never execute an action. Review imported targets before testing.
 
-## Limits
+## Deck sync and limits
 
-The default profile is illustrative, not a verified copy of device mappings. Local paths may not exist on another PC; missing paths and application URIs generate warnings. Unsupported labels are preserved with font/width warnings; no physical display rendering is implemented here. The Sync to deck button is disabled and never claims success. Keep the existing v2.2 telemetry companion; this editor does not replace it.
+The default profile is illustrative, not a verified copy of device mappings. Local paths may not exist on another PC; missing paths and application URIs generate warnings.
+
+Host-side v2.3 sync logic is implemented in `deck_sync.py`: capability discovery, bounded framing/chunking, transaction IDs, sequence checks, digest/length validation, cancellation, retries, APPLIED acknowledgement handling, revision/digest readback validation, and slot-activation event de-duplication. Existing telemetry UUIDs remain unchanged (`917e0001` service and encrypted-write `917e0002` RX); new v2.3 config endpoints are explicitly separate (`917e1001/917e1002/917e1003`).
+
+The GUI keeps Sync unavailable unless a connected deck exposes the required v2.3 capability endpoint. Unsupported/older firmware is reported honestly and never shown as Synced. Synced status is shown only after APPLIED plus matching readback digest/revision.
 
 Arduino-ESP32 must remain exactly 2.0.17. This commit changes no firmware, core, BLE library, board target or main-branch content.
 
 ## Validation
 
-Run python -m unittest -v test_model.py from control_centre. This exact correction revision has not yet been executed; TEST_RESULTS.txt states that explicitly. Earlier test results do not certify this revision. A fresh Windows GUI smoke test is also required: edit, save/reload, overwrite and inspect backup, reject invalid input, cancel unsaved navigation, open a URL/folder deliberately, and confirm sync stays disabled.
+Run `python -m py_compile model.py app.py deck_sync.py test_model.py test_deck_sync.py` and then `python -m unittest -v test_model.py test_deck_sync.py` from `control_centre`.
+
+A fresh Windows GUI + real-device smoke test is still required on this exact revision: edit/save/reload, overwrite backup, reject invalid input, cancel unsaved navigation, open a URL/folder deliberately, verify unsupported firmware states are honest, and validate APPLIED+readback behaviour on v2.3-capable firmware.

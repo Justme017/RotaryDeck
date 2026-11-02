@@ -10,12 +10,15 @@
 - [x] Deck-sync protocol and implementation plan are drafted.
 - [x] The prior Windows Control Centre equivalent was manually smoke-tested by the owner.
 - [x] Exact source snapshot e0b52ae passes Python syntax compilation and all 15 automated model tests in a headless environment; see control_centre/TEST_RESULTS.txt.
+- [x] Host-side v2.3 sync codec/state machine is implemented with capability gating, bounded chunking, transaction IDs, sequencing, digest/length checks, cancellation/retry and APPLIED+readback validation.
+- [x] Host-side activation routing now binds events to live session/revision, rejects stale/unknown mappings and deduplicates duplicate events.
+- [x] Added 15 sync/receiver unit tests with fake transport coverage for boundary payloads, malformed frames, bad sequence/digest, timeout/disconnect/lost acknowledgement retry, storage failure and readback mismatch.
 
 ## In progress
 
 - [ ] Perform a fresh Windows GUI smoke test on this exact source revision.
-- [ ] Implement the host-side sync transaction codec and state machine.
-- [ ] Implement ESP32 configuration staging, validation, NVS/Preferences persistence, acknowledgement and readback.
+- [ ] Import and inspect the v2.2.2 release archive contents in-repo with provenance (blocked: release asset currently unreachable from this environment despite release metadata listing it).
+- [ ] Implement ESP32 configuration staging, validation, NVS/Preferences persistence and on-device integration against imported baseline firmware.
 
 ## Next
 

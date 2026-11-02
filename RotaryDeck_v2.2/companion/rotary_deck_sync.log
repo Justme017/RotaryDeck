@@ -1,0 +1,59 @@
+2026-10-30 14:13:27,853 INFO Rotary Deck v2.2 companion: C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\.venv\Scripts\python.exe
+2026-10-30 14:13:27,906 INFO Python 3.14.7 (AMD64); executable: C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\.venv\Scripts\python.exe
+2026-10-30 14:13:27,980 INFO Dependency OK: winrt.windows.foundation
+2026-10-30 14:13:28,015 INFO Dependency OK: winrt.windows.foundation.collections
+2026-10-30 14:13:28,047 INFO Dependency OK: winrt.windows.devices.bluetooth
+2026-10-30 14:13:28,079 INFO Dependency OK: winrt.windows.devices.enumeration
+2026-10-30 14:13:28,124 INFO Dependency OK: winrt.windows.devices.bluetooth.genericattributeprofile
+2026-10-30 14:13:28,160 INFO Dependency OK: winrt.windows.storage.streams
+2026-10-30 14:13:28,202 INFO Dependency OK: winrt.windows.media.control
+2026-10-30 14:13:28,354 INFO Dependency OK: pycaw.pycaw
+2026-10-30 14:13:28,407 INFO Audio OK: Headphones (Super Buds 555); volume=44%; muted=False
+2026-10-30 14:13:28,408 INFO Enumerating paired BLE devices...
+2026-10-30 14:13:42,864 INFO Rotary Deck v2.2 companion: C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\.venv\Scripts\python.exe
+2026-10-30 14:13:42,890 INFO Enumerating paired BLE devices...
+2026-10-30 14:13:42,928 INFO Paired BLE devices: Rotary Deck, MX Master 3, MX Master 3, MX Keys
+2026-10-30 14:13:42,928 INFO Opening paired device: Rotary Deck
+2026-10-30 14:13:42,968 INFO Discovering sync service 917e0001-d588-4b6b-a9a0-a81a964ce2b1
+2026-10-30 14:13:43,143 INFO Sync receiver found. Starting acknowledged writes.
+2026-10-30 14:13:43,147 INFO Sync active: volume ~0.5s, media ~2s, clock ~5s; Ctrl+C to exit.
+2026-10-30 14:13:43,356 INFO Volume: 44% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:13:43,639 INFO Media: A site is playing media
+2026-10-30 14:14:08,123 INFO Volume: 46% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:09,155 INFO Volume: 50% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:09,655 INFO Volume: 52% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:10,156 INFO Volume: 50% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:10,655 INFO Volume: 48% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:15,252 ERROR Sync failed; retrying in 5 seconds
+Traceback (most recent call last):
+  File "C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\rotary_deck_sync.py", line 252, in run
+    await stream(characteristic)
+  File "C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\rotary_deck_sync.py", line 208, in stream
+    await write_packet(characteristic, volume_packet(sequence, percent, muted))
+  File "C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\rotary_deck_sync.py", line 171, in write_packet
+    result = await asyncio.wait_for(characteristic.write_value_with_result_and_option_async(buffer, GattWriteOption.WRITE_WITH_RESPONSE), 10)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shubham.mehta\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\.venv\Lib\site-packages\winrt\runtime\_internals.py", line 245, in wait
+    return op.get_results()
+           ~~~~~~~~~~~~~~^^
+OSError: [WinError -2147023673] The operation was canceled by the user.
+2026-10-30 14:14:20,288 INFO Enumerating paired BLE devices...
+2026-10-30 14:14:20,307 INFO Paired BLE devices: Rotary Deck, MX Master 3, MX Master 3, MX Keys
+2026-10-30 14:14:20,308 INFO Opening paired device: Rotary Deck
+2026-10-30 14:14:20,335 INFO Discovering sync service 917e0001-d588-4b6b-a9a0-a81a964ce2b1
+2026-10-30 14:14:20,474 INFO Sync receiver found. Starting acknowledged writes.
+2026-10-30 14:14:20,475 INFO Sync active: volume ~0.5s, media ~2s, clock ~5s; Ctrl+C to exit.
+2026-10-30 14:14:20,601 INFO Volume: 48% muted=False output=Headphones (Super Buds 555)
+2026-10-30 14:14:20,883 INFO Media: A site is playing media
+2026-10-30 15:20:13,899 INFO Rotary Deck v2.2 companion: C:\Users\shubham.mehta\Downloads\RotaryDeck_v2.2 (1)\RotaryDeck_v2.2\companion\.venv\Scripts\python.exe
+2026-10-30 15:20:13,928 INFO Enumerating paired BLE devices...
+2026-10-30 15:20:13,964 INFO Paired BLE devices: Rotary Deck, MX Master 3, MX Master 3, MX Keys
+2026-10-30 15:20:13,964 INFO Opening paired device: Rotary Deck
+2026-10-30 15:20:14,000 INFO Discovering sync service 917e0001-d588-4b6b-a9a0-a81a964ce2b1
+2026-10-30 15:20:14,181 INFO Sync receiver found. Starting acknowledged writes.
+2026-10-30 15:20:14,186 INFO Sync active: volume ~0.5s, media ~2s, clock ~5s; Ctrl+C to exit.
+2026-10-30 15:20:14,402 INFO Volume: 100% muted=False output=Lautsprecher (Realtek(R) Audio)
+2026-10-30 15:20:14,686 INFO Media: A site is playing media

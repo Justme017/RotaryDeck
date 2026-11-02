@@ -1,0 +1,133 @@
+{
+  "source_repository": "Justme017/deck-zips-",
+  "inventory_source_commit": "0049669c3c1d42fce29d30aaebaa0c6befcc6ef5",
+  "method": "Reconstructed from the uploaded baseline and documented fixes, then verified against archived Git blob hashes. Not extracted from the later release asset RotaryDeck_v2.2.zip.",
+  "verified_sources": {
+    "firmware/RotaryDeck_v2_1/DeckCore.h": {
+      "archive": "RotaryDeck_v2_2_Complete_Dashboard_Date.zip",
+      "git_blob": "adb211089196ab0a80d76190d969ac7ddb0c5862"
+    },
+    "firmware/RotaryDeck_v2_1/DisplayUI.h": {
+      "archive": "RotaryDeck_v2_2_Complete_Dashboard_Date.zip",
+      "git_blob": "970f6dcacda9e33fa757866bfe465aa423208d0b"
+    },
+    "companion/rotary_deck_sync.py": {
+      "archive": "RotaryDeck_v2_2_VolumeSync_Candidate.zip",
+      "git_blob": "405ccffbcea77e6fce65e0064fd21015304f8e3f"
+    }
+  },
+  "local_original_sketch": {
+    "uploaded_filename": "RotaryDeck_v2_1.ino",
+    "git_blob": "953c8a7ab2950eeb5dffdd9a4a7d1c62750db612"
+  },
+  "reconnect_patch": {
+    "bundles_upstream_library_source": false,
+    "original_source_normalized_git_blob": "8b77b98e3813dd163deb84c6a4cd073ef6c0346c",
+    "expected_patched_source_normalized_git_blob": "6b6d6d5d03f289ad4e1c7c79c89a9d3a75441a05",
+    "required_header_normalized_git_blob": "4fdeaa5d84bb349a0f57315595d2c27b0864af7e"
+  },
+  "excluded": [
+    "upstream BLE library source",
+    "compiled binaries",
+    ".venv",
+    "site-packages",
+    "logs",
+    "pre-fix backups",
+    "credentials",
+    "unimplemented GUI/OS ports/hardware files"
+  ],
+  "files": {
+    ".gitignore": {
+      "sha256": "7f1cfd614e13a691e0dcbcb1e165f72b05f73296d3b8455ae3f103f3c3c3a30c",
+      "bytes": 60
+    },
+    "CHANGELOG.md": {
+      "sha256": "98ae7accc7746ca444cd7d1bab15a09eb25ad50af2984415f4fee543e1743553",
+      "bytes": 1368
+    },
+    "LICENSE": {
+      "sha256": "0b7a6128d7665e02839cc657808222f106b14ab6c2551ffe0813d24f335ede82",
+      "bytes": 1070
+    },
+    "README.md": {
+      "sha256": "9ac4fbdaa379b43cb4acafb7455bc74e580b47af23c200853803d56399786db9",
+      "bytes": 2036
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "sha256": "81cb0e15684ad3b99ebc72a0646c40414bb2b57f17c9088244175a5ba8b659f1",
+      "bytes": 1161
+    },
+    "VALIDATION.md": {
+      "sha256": "cebd9e7b4c74d7640d7ed174d96c1ae4ab11678fd2e9ea359cc78cb5b2902b21",
+      "bytes": 2395
+    },
+    "VERSION.json": {
+      "sha256": "ef1bc813fc0c2bfaef4d52ea3822c54cdca50c5a6d39dfea9ae4d0d73a421dc1",
+      "bytes": 356
+    },
+    "companion/diagnose_companion.bat": {
+      "sha256": "42470162f866c6b58c56c07cf112d2cf3ccaa1ff717f3fd3571b8e22a48920e0",
+      "bytes": 218
+    },
+    "companion/requirements.txt": {
+      "sha256": "9201320ce31f1659a13a3f4fd86df1d22c66909ed136cc812e2ebb686ee477c4",
+      "bytes": 336
+    },
+    "companion/rotary_deck_sync.py": {
+      "sha256": "b533e2973e1e6301329030251bd520ec143a2acad0aa8bcf19139a817c0ad688",
+      "bytes": 13281
+    },
+    "companion/setup_companion.bat": {
+      "sha256": "384c0490f5b540c1c7d11c807c9eb2344034e927b86f1b592086316ed961f49e",
+      "bytes": 518
+    },
+    "companion/start_companion.bat": {
+      "sha256": "5fe811d573f72d71dd988e0f0a92bf1e485a23d55b7685a60f263ffdcfa5f4bc",
+      "bytes": 210
+    },
+    "docs/CONTROLS.md": {
+      "sha256": "8bdf027829c38fdc65f657867270e6ef52d172ef7a5e10edbaf9dd0a0bf96922",
+      "bytes": 1509
+    },
+    "docs/GPIO_REFERENCE.md": {
+      "sha256": "af1f5c42cd9aff65788486bc8b863853816299265b8d290abcab47fb39c1fd4c",
+      "bytes": 714
+    },
+    "docs/INSTALLATION.md": {
+      "sha256": "b9f4473b81b5959525d01b6ee5d6b533cb740c78100c159b8549e2bc2aab8453",
+      "bytes": 3899
+    },
+    "docs/PROTOCOL.md": {
+      "sha256": "23cc60bb37f820848c99bf9bbf9743afe901cd183b8093065d72a0e9ef19182a",
+      "bytes": 1032
+    },
+    "firmware/RotaryDeck_v2_1/DeckCore.h": {
+      "sha256": "8bf280a744ce01e9bf6db34508fd0fc59882536bc66f322708cea4e13e9aa08d",
+      "bytes": 20494
+    },
+    "firmware/RotaryDeck_v2_1/DisplayUI.h": {
+      "sha256": "13363209a6e5dc29b85a5df83faa79969572ecd41b88a6bf122c89579747433e",
+      "bytes": 17101
+    },
+    "firmware/RotaryDeck_v2_1/RotaryDeck_v2_1.ino": {
+      "sha256": "07c3250024e6657c9a20f834e5856d5594719c204c21ebd3214fa7448890132f",
+      "bytes": 582
+    },
+    "tests/receiver_host_test.cpp": {
+      "sha256": "4cb253475e8c407467ad9fbe2248d2a7663679ca254f4adbd0ffb98019e1723d",
+      "bytes": 3075
+    },
+    "tests/test_package.py": {
+      "sha256": "56f589f852202f6993c7a0921e0da3785a2f01d83f4c6043760f614aead16dc8",
+      "bytes": 3339
+    },
+    "tools/apply_reconnect_patch.bat": {
+      "sha256": "1d06b8081c04e28269db3c273ce20da860d28d33a7b91fc3267152438d75c7b5",
+      "bytes": 204
+    },
+    "tools/apply_reconnect_patch.py": {
+      "sha256": "eb125994961b9872b1d47ac3088cbcc9e1da435cb7652690b4bca748657fde2b",
+      "bytes": 5499
+    }
+  }
+}

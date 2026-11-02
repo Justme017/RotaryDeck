@@ -26,21 +26,21 @@
 
 ## Deck sync
 
-- [ ] Inspect actual v2.2 firmware/companion source and record UUIDs, security, connection ownership, encoder and display hooks.
-- [ ] Finalize sync frame layout, capability endpoint, payload limits and timeouts.
-- [ ] Implement host codec and transaction state machine.
-- [ ] Add fake-transport tests for chunking, bad sequence, bad digest, timeout, disconnect, retry and readback mismatch.
+- [ ] Inspect actual v2.2 firmware/companion source and record UUIDs, security, connection ownership, encoder and display hooks (blocked until the v2.2.2 release ZIP can be downloaded in this environment).
+- [x] Finalize host-side sync frame layout, capability endpoint handling, payload limits and timeout/retry behaviour.
+- [x] Implement host codec and transaction state machine.
+- [x] Add fake-transport tests for chunking, bad sequence, bad digest, timeout, disconnect, retry and readback mismatch.
 - [ ] Implement ESP32 staging and strict metadata validation.
 - [ ] Implement atomic active-generation selection and recoverable NVS/Preferences persistence.
 - [ ] Return APPLIED only after durable storage and active-state switch.
-- [ ] Add revision/digest readback and show Synced only on exact match.
+- [x] Add revision/digest readback and show Synced only on exact match.
 
 ## Dynamic deck
 
 - [ ] Render configured labels using measured pixel width and supported truncation.
 - [ ] Emit deliberate slot-activation events.
 - [ ] Resolve URL and folder actions on Windows against the acknowledged revision.
-- [ ] Prevent duplicate activation events and execution across reconnect.
+- [x] Prevent duplicate activation events and execution across reconnect in host routing logic.
 - [ ] Keep existing HID media controls with exactly one execution path.
 - [ ] Pass the OBS-to-Netflix end-to-end acceptance test without recompiling firmware.
 

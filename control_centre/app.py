@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from time import time
 from pathlib import Path
 from model import TYPES, BUILTINS, ProfileError, validate, load_profile, save_profile, profile_folder, safe_stem, warnings, test_action
+from deck_sync import DeckSyncClient, SyncError, SyncUnsupportedError
 
 class Editor:
     def __init__(self, window):
@@ -11,7 +13,8 @@ class Editor:
         self.loading = False
         self.rows = {}
         self.name = tk.StringVar()
-        self.status = tk.StringVar(value='Local editor only. Device sync unavailable.')
+        self.status = tk.StringVar(value='Local editor only. Device sync unavailable: no v2.3-capable firmware endpoint detected.')
+        self.sync_transport = None
         window.title('RotaryDeck Control Centre - local editor')
         window.geometry('1100x650')
         window.minsize(920, 540)
@@ -20,7 +23,8 @@ class Editor:
         buttons = [('Load / import', self.load), ('Save', self.save), ('Save as', lambda: self.save(True)), ('Restore default', self.restore)]
         for title, command in buttons:
             ttk.Button(toolbar, text=title, command=command).pack(side='left', padx=3)
-        ttk.Button(toolbar, text='Sync to deck - unavailable', state='disabled').pack(side='right')
+        self.sync_button = ttk.Button(toolbar, text='Sync to deck', command=self.sync_to_deck, state='disabled')
+        self.sync_button.pack(side='right')
         namebar = ttk.Frame(window, padding=(12, 4))
         namebar.pack(fill='x')
         ttk.Label(namebar, text='Profile name:').pack(side='left')
@@ -55,6 +59,7 @@ class Editor:
         ttk.Label(window, textvariable=self.status, padding=10, wraplength=1050).pack(fill='x')
         ttk.Label(window, text='Firmware baseline: Arduino-ESP32 exactly 2.0.17. No firmware or BLE-library changes.', padding=(10, 0, 10, 10)).pack(fill='x')
         window.protocol('WM_DELETE_WINDOW', self.close)
+        self.refresh_sync_state()
         try:
             self.show(load_profile(Path(__file__).parent / 'profiles' / 'default.json'))
         except (OSError, ValueError) as exc:
@@ -63,7 +68,25 @@ class Editor:
     def changed(self, *_):
         if not self.loading:
             self.dirty = True
-            self.status.set('Unsaved edits. Device sync unavailable.')
+            self.status.set('Unsaved edits. Device sync unavailable until a v2.3-capable deck endpoint is connected.')
+
+    def refresh_sync_state(self):
+        self.sync_button.configure(state='normal' if self.sync_transport else 'disabled')
+
+    def sync_to_deck(self):
+        if not self.sync_transport:
+            self.status.set('Device sync unavailable: connected firmware is missing required v2.3 capability endpoints.')
+            return
+        try:
+            profile = self.collect()
+            client = DeckSyncClient(self.sync_transport)
+            revision = int(time())
+            client.sync_profile(profile, revision)
+            self.status.set('Synced: APPLIED acknowledgement and readback digest matched.')
+        except SyncUnsupportedError as exc:
+            self.status.set(f'Device sync unavailable: {exc}')
+        except (SyncError, OSError, ValueError) as exc:
+            self.status.set(f'Device sync failed: {exc}')
 
     def discard(self):
         return not self.dirty or messagebox.askyesno('Unsaved edits', 'Discard unsaved edits?')

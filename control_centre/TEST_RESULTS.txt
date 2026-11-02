@@ -32,3 +32,45 @@ Ran 15 tests in 0.019s
 OK
 
 A fresh Windows GUI smoke test of this exact source revision is still pending. BLE sync, firmware compilation, NVS persistence, display rendering and deck activation have not been implemented or tested by this suite.
+
+---
+
+Additional host-side sync verification (current revision, Linux headless):
+
+Command: python -m py_compile model.py app.py deck_sync.py test_model.py test_deck_sync.py
+Exit code: 0
+
+Command: python -m unittest -v test_deck_sync.py
+Exit code: 0
+
+test_activation_router_deduplicates_and_rejects_stale ... ok
+test_activation_router_rejects_unknown_and_builtin ... ok
+test_capability_discovery_rejects_malformed_response ... ok
+test_capability_discovery_rejects_old_protocol ... ok
+test_codec_rejects_malformed_frame ... ok
+test_prepare_payload_uses_bounded_metadata ... ok
+test_render_label_truncates_by_width ... ok
+test_sync_disconnect_raises ... ok
+test_sync_readback_mismatch ... ok
+test_sync_rejects_bad_digest ... ok
+test_sync_rejects_bad_sequence_ack ... ok
+test_sync_rejects_oversize_payload ... ok
+test_sync_retries_after_lost_ack ... ok
+test_sync_storage_failure_reports_retryable ... ok
+test_sync_success_with_chunk_boundaries ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.009s
+
+OK
+
+Command: python -m unittest -v test_model.py
+Exit code: 0
+
+All 15 existing model tests passed.
+
+Unavailable in this sandbox:
+- Windows GUI runtime validation
+- Real BLE hardware/device validation
+- Host C++ test execution (no C++ host test project in repository snapshot)
+- Firmware compile against imported v2.2.2 baseline (asset download blocked; see docs/V2_2_IMPORT_PROVENANCE.md)
