@@ -1,35 +1,40 @@
-# Public-launch checklist
+# v2.3 release gates
 
-Policy: remain private until the owner confirms readiness. Documentation, draft releases and an MIT file do not authorise a public launch.
+Scope: Windows companion/Control Centre + Seeed Studio XIAO ESP32-S3. nRF52840 and Linux/macOS are deferred and unsupported by this release, not required completed ports. Preserve Arduino-ESP32 2.0.17 and existing BLE backend. Publication and visibility changes require explicit owner approval.
 
-## Required work
+## Repository and implementation
+- [x] Owner-uploaded baseline source available under RotaryDeck_v2.2/.
+- [ ] Fix all blockers in INTEGRATION_REVIEW.md.
+- [ ] Resolve PR conflicts and review the resolved source.
+- [ ] Run model/sync/baseline receiver tests and exact-core firmware build; record exact commit and real outputs.
+- [ ] Reconcile baseline manifests with v2.3 modified artifacts.
 
-- [ ] Reviewed current source is available in a reproducible layout.
-- [ ] Windows companion has a usable configuration interface.
-- [ ] Apps and Actions are editable, tested and acknowledged by the deck.
-- [ ] Exact nRF52840 board selected and final firmware/device testing completed.
-- [ ] S3 and nRF52840 wiring diagrams independently verified.
-- [ ] Case CAD, printable files, test print and assembly instructions completed.
-- [ ] Real screen photos and feature GIFs captured; no mock-ups presented as working features.
-- [ ] README remains concise with a clear supported-platform table and detailed documentation links.
-- [ ] Linux and macOS implementation/testing completed, or explicitly deferred by the owner with unsupported status clearly documented.
+## Windows smoke test - NOT RUN here
+- [ ] Record Windows/Python/dependency versions and tested commit.
+- [ ] Launch editor; load/import; save/reload; overwrite backup/restore.
+- [ ] Reject invalid input; cancel unsaved navigation and action confirmation.
+- [ ] Explicitly test harmless HTTPS URL and existing test folder.
+- [ ] Confirm unsupported/disconnected firmware never appears Synced.
+- [ ] Test clean companion installation and diagnostics locally.
 
-## Validation
+## Physical deck - NOT RUN here
+- [ ] Editable slots, measured label rendering and deliberate activation.
+- [ ] Durable APPLIED and matching revision/digest/session readback.
+- [ ] Interrupted transfers and storage failures retain prior active profile.
+- [ ] Power cycles/reconnects retain profile and never replay launch actions.
+- [ ] OBS-to-Netflix acceptance without firmware recompilation.
 
-- [ ] Clean firmware build/install and clean companion installation tested.
-- [ ] Slot editing, target validation, profile persistence and device-label sync tested.
-- [ ] Interrupted sync retains the previous valid configuration.
-- [ ] Power cycles and reconnects tested with companion stopped and running.
-- [ ] No queued launch actions replay after reconnection.
-- [ ] Current functionality and proposed functionality are clearly distinguished.
+## Hardware and enclosure - measurements required
+- [ ] Label exact display PCB and front/back connector orientation.
+- [ ] Verify wiring and power/logic levels on actual hardware.
+- [ ] Measure PCB width/height/thickness, mounting-hole centres and diameters.
+- [ ] Measure encoder shaft/knob, connector height, cable exit and USB clearance.
+- [ ] Design/print/fit-test enclosure and write assembly instructions.
+- [ ] Capture real photographs/GIFs; no fabricated dimensions or feature evidence.
 
-## Packaging and permissions
-
-- [ ] Archives contain the intended source, companion and required patch instructions.
-- [ ] No .venv, caches, credentials, private logs or unnecessary personal paths.
-- [ ] Release tags, attachments and descriptions match the intended versions.
-- [ ] Third-party redistribution permissions/notices reviewed; root MIT is not used to relicense upstream code.
-- [ ] Open-source download provides the actual editable project source, not documentation-only automatic archives.
-- [ ] Owner explicitly approves publication and repository visibility change.
-
-No existing workflow should be interpreted as approval to publish. Hardware validation and OS support must be reported as actually tested, not assumed.
+## Packaging
+- [ ] No logs, virtual environments, caches, credentials or private evidence.
+- [ ] Editable source, dependencies, licence scope and patch instructions included.
+- [ ] Release asset filenames and documentation links match.
+- [ ] New artifact checksums verified; historical baseline hashes not misrepresented.
+- [ ] Owner explicitly approves release/publication after acceptance.

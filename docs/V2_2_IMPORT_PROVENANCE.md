@@ -1,21 +1,9 @@
-# v2.2.2 baseline import provenance
+# v2.2 baseline provenance and current integration
 
-## Required asset
+The source-download blocker is resolved. The owner committed RotaryDeck_v2.2/ to feature/v2.3-control-centre and copilot/featurev23-control-centre. The initial uploaded folder tree was ab8ca146ac07a7e79db98d128709041521f7c781. The owner confirms RotaryDeck_v2.2.2.zip is a renamed v2.2 archive, not a separate firmware version.
 
-- Release: `v2.2`
-- Asset name: `RotaryDeck_v2.2.2.zip`
-- Expected SHA-256: `8a3a91e63beab5fae2049169cb5c350525c76d3cbf3e703d9804ca939508d228`
-- Release metadata source: GitHub release API via `get_release_by_tag`.
+The release API previously reported archive SHA-256 8a3a91e63beab5fae2049169cb5c350525c76d3cbf3e703d9804ca939508d228. This is archive metadata, not a checksum independently verified by downloading the ZIP here.
 
-## Retrieval attempts in this environment
+RotaryDeck_v2.2/SOURCE_MANIFEST.json records original reconstructed-package provenance and baseline fingerprints. Subsequent v2.3 modifications do not inherit those original checksum guarantees. At reviewed commit 20b93d5eb82a8cd6bc570b077056d51002cdc946 the firmware headers have been modified, but the baseline manifest, SHA256SUMS and fingerprint test still describe original headers. Reconcile this before packaging; do not silently replace historical provenance with claims that new artifacts were historically verified. The package manifest also lists a package-local .gitignore whose presence must be reconciled with the imported tree.
 
-1. `get_release_by_tag` for `v2.2.2` returned 404 (tag not present).
-2. `get_release_by_tag` for `v2.2` returned the `RotaryDeck_v2.2.2.zip` asset metadata including matching digest.
-3. Direct download attempt from `https://github.com/Justme017/RotaryDeck/releases/download/v2.2/RotaryDeck_v2.2.2.zip` returned HTTP 404.
-4. GitHub API asset download attempt (`/releases/assets/692177411` with octet-stream accept header) returned HTTP 403 in this sandbox.
-
-## Current status
-
-Firmware/companion baseline import is currently blocked in this environment because the release asset cannot be downloaded here, so extraction and in-repo source import cannot be completed without fabricating content.
-
-Until the archive is downloadable, host-only v2.3 sync logic and tests are implemented, but firmware-side integration, on-device storage staging, and hardware compile/validation remain pending.
+The companion runtime log is absent from the reviewed current tree; root .gitignore contains its scoped ignore rule. The manifest does not list that log. This does not remove historical copies or certify the entire repository contains no secrets.

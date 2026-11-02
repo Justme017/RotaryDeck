@@ -1,38 +1,25 @@
 # Project status
 
-## Done
+## Inspection snapshot
+Reviewed PR #1 source at 20b93d5eb82a8cd6bc570b077056d51002cdc946 on 2026-11-02. This is a static review, not fresh firmware compilation or Windows/hardware validation.
 
-- [x] v2.2 firmware and Windows companion remain the known-good baseline.
-- [x] Arduino-ESP32 core is pinned to exactly 2.0.17 for current ESP32 releases.
-- [x] v2.3 development branch exists.
-- [x] Profile schema, validation rules, action catalogue, display-label rules, backup policy, validation checklist, hardware-evidence checklist and OBS-to-Netflix acceptance test are documented.
-- [x] Local Control Centre source is committed: six Apps and six Actions, profile load/import, validation, local save/load, timestamped backups, unsaved-edit protection, and explicit URL/folder PC tests.
-- [x] Deck-sync protocol and implementation plan are drafted.
-- [x] The prior Windows Control Centre equivalent was manually smoke-tested by the owner.
-- [x] Exact source snapshot e0b52ae passes Python syntax compilation and all 15 automated model tests in a headless environment; see control_centre/TEST_RESULTS.txt.
-- [x] Host-side v2.3 sync codec/state machine is implemented with capability gating, bounded chunking, transaction IDs, sequencing, digest/length checks, cancellation/retry and APPLIED+readback validation.
-- [x] Host-side activation routing now binds events to live session/revision, rejects stale/unknown mappings and deduplicates duplicate events.
-- [x] Added 15 sync/receiver unit tests with fake transport coverage for boundary payloads, malformed frames, bad sequence/digest, timeout/disconnect/lost acknowledgement retry, storage failure and readback mismatch.
+## Available
+- Local Control Centre editor and host sync implementation exist. Earlier recorded reports list 15 model and 15 sync tests passing; they do not certify the latest firmware integration.
+- Owner-uploaded v2.2 firmware, display, companion, patcher and baseline tests are committed under RotaryDeck_v2.2/. Source retrieval is no longer a blocker.
+- Candidate firmware configuration/label/event code and Windows transport now exist, but review found blocking incompatibilities; see INTEGRATION_REVIEW.md.
+- Runtime companion log is absent from the reviewed PR tree and a scoped ignore rule exists. Historical copies were not purged.
 
-## In progress
+## Blocking before merge or flashing
+- Host SHA-256 and firmware simpleDigest are incompatible.
+- Firmware rejects readback after COMMIT closes the transaction.
+- Editor initially disables Sync and has no reachable startup connection/enabling path.
+- Strict metadata validation and atomic runtime/storage activation require fixes.
+- Host activation listener/profile binding and shared telemetry connection ownership remain incomplete.
+- Baseline fingerprints/manifests conflict with modified firmware files.
+- Resolve reported PR merge conflicts, then rerun checks on the resolved commit.
 
-- [ ] Perform a fresh Windows GUI smoke test on this exact source revision.
-- [ ] Import and inspect the v2.2.2 release archive contents in-repo with provenance (blocked: release asset currently unreachable from this environment despite release metadata listing it).
-- [ ] Implement ESP32 configuration staging, validation, NVS/Preferences persistence and on-device integration against imported baseline firmware.
-
-## Next
-
-- [ ] Render synced labels with measured display-font width and supported truncation.
-- [ ] Emit deliberate slot-activation events for URL and folder actions.
-- [ ] Resolve actions on the Windows companion against the acknowledged profile revision.
-- [ ] Run the OBS-to-Netflix end-to-end acceptance test.
-- [ ] Complete enclosure, verified wiring evidence, screen photos/GIFs and concise user documentation.
+## Validation still pending
+Exact-core ESP32 build, Windows GUI and clean install, real BLE/reconnect, interrupted sync, power-loss persistence and deliberate OBS-to-Netflix acceptance. Do not mark any of these passed without execution evidence.
 
 ## Guardrails
-
-- Keep main as the known-working v2.2 baseline.
-- Keep Arduino-ESP32 at exactly 2.0.17 during v2.3.
-- Do not replace or migrate the BLE library/backend during this work.
-- Do not mix nRF52840 work into the ESP32 v2.3 release.
-- Do not mark a profile Synced without an APPLIED acknowledgement and matching revision/digest readback.
-- Do not execute actions on load, import, sync, boot, retry or reconnect.
+v2.3 scope is Windows + XIAO ESP32-S3. Keep Arduino-ESP32 exactly 2.0.17, existing Bluedroid/T-vK BLE Keyboard backend and reconnect workaround. No automatic merge, tag/release changes or publication. No action execution during load/import/save/sync/boot/retry/reconnect. Synced requires durable APPLIED and matching revision/digest readback.
