@@ -20,8 +20,13 @@ constexpr unsigned long FEEDBACK=1000,DOUBLE_MS=320,HOLD_MS=700;
 constexpr const char* SERVICE_UUID="917e0001-d588-4b6b-a9a0-a81a964ce2b1";
   
 constexpr const char* RX_UUID="917e0002-d588-4b6b-a9a0-a81a964ce2b1";
+
+constexpr const char* CONFIG_SERVICE_UUID="917e1001-d588-4b6b-a9a0-a81a964ce2b1";
+constexpr const char* CONFIG_CONTROL_UUID="917e1002-d588-4b6b-a9a0-a81a964ce2b1";
+constexpr const char* CONFIG_STATUS_UUID="917e1003-d588-4b6b-a9a0-a81a964ce2b1";
   
 }
+enum class SlotMode:uint8_t{Legacy,OpenUrl,OpenFolder,Builtin,Unsupported};
 enum class Screen:uint8_t{Boot,Dashboard,Home,Apps,Media,Actions,Settings,Connection,DisplayPage,Controls,About,Edit,Confirm,Shutdown};
   
 enum class EditField:uint8_t{Step,Reverse,Edges,Sound,Timeout,Estimate,BackGesture};
@@ -61,6 +66,14 @@ struct DeckState {
   uint8_t playback=0,mediaSession=0;
   
  char title[129]={};
+   uint32_t profileRevision=0;
+   char profileDigest[65]={};
+   char profileSession[17]={};
+   uint16_t activationSequence=0;
+   SlotMode appMode[6]={SlotMode::Legacy,SlotMode::Legacy,SlotMode::Legacy,SlotMode::Legacy,SlotMode::Legacy,SlotMode::Legacy};
+   SlotMode actionMode[6]={SlotMode::Builtin,SlotMode::Builtin,SlotMode::Builtin,SlotMode::Builtin,SlotMode::Builtin,SlotMode::Builtin};
+   char appLabel[6][17]={"CHROME","SPOTIFY","DISCORD","FILES","OBS","CODE"};
+   char actionLabel[6][17]={"SHOT","MUTE","LOCK","SEARCH","DESKTOP","TASKS"};
   
 };
   
@@ -85,6 +98,9 @@ struct RxPacket{uint8_t size,data[20];
   
 static RxPacket rxQueue[16];
   static volatile uint8_t rxHead=0,rxTail=0;
+
+static RxPacket configQueue[32];
+static volatile uint8_t configHead=0,configTail=0;
   
 class DeckRxCallbacks:public BLECharacteristicCallbacks {
  void onWrite(BLECharacteristic* characteristic) override {
@@ -105,6 +121,26 @@ class DeckRxCallbacks:public BLECharacteristicCallbacks {
 };
   
 static DeckRxCallbacks rxCallbacks;
+
+class DeckConfigCallbacks:public BLECharacteristicCallbacks {
+ void onWrite(BLECharacteristic* characteristic) override {
+  std::string value=characteristic->getValue();
+  if(value.empty()||value.size()>20)return;
+
+  portENTER_CRITICAL(&rxMux);
+  uint8_t next=(configHead+1)%32;
+
+  if(next!=configTail){
+   RxPacket& p=configQueue[configHead];
+   p.size=value.size();
+   memcpy(p.data,value.data(),value.size());
+   configHead=next;
+  }
+  portEXIT_CRITICAL(&rxMux);
+ }
+};
+
+static DeckConfigCallbacks configCallbacks;
   
 // Capture the HID server via T-vK BLE Keyboard's supported startup hook.
 class DeckKeyboard : public BleKeyboard {
@@ -149,8 +185,10 @@ public:
   
    s_.options.backDouble=prefs_.getBool("backdbl",true);
   s_.options.hour12=prefs_.getBool("hour12",false);
-  
+   
   }
+  profileStorage_=profilePrefs_.begin("rdcfg",false);
+  loadActiveProfile();
   threshold_=s_.options.edges;
   raw_=stable_=digitalRead(DeckConfig::BUTTON);
   ignoreRelease_=raw_==LOW;
@@ -182,7 +220,19 @@ public:
    advertising->addServiceUUID(DeckConfig::SERVICE_UUID);
   advertising->setScanResponse(true);
   s_.syncReady=true;
-  
+
+  BLEService* configService=server->createService(DeckConfig::CONFIG_SERVICE_UUID);
+  configControl_=configService->createCharacteristic(DeckConfig::CONFIG_CONTROL_UUID,BLECharacteristic::PROPERTY_WRITE);
+  configControl_->setAccessPermissions(ESP_GATT_PERM_WRITE_ENCRYPTED);
+  configControl_->setCallbacks(&configCallbacks);
+  configStatus_=configService->createCharacteristic(
+   DeckConfig::CONFIG_STATUS_UUID,
+   BLECharacteristic::PROPERTY_NOTIFY|BLECharacteristic::PROPERTY_READ
+  );
+  configStatus_->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED);
+  configService->start();
+  advertising->addServiceUUID(DeckConfig::CONFIG_SERVICE_UUID);
+   
   }
   BLEDevice::startAdvertising();
   s_.animationStart=activity_=millis();
@@ -198,6 +248,8 @@ public:
   soundTick();
   linkTick();
   receivePc(now);
+  receiveConfig(now);
+  configTick(now);
   bondTick(now);
   
   if(s_.screen==Screen::Boot && now-s_.animationStart>=1400)s_.screen=Screen::Dashboard;
@@ -245,7 +297,33 @@ public:
 private:
  DeckKeyboard keyboard_;
   Preferences prefs_;
+  Preferences profilePrefs_;
   DeckState s_;
+  BLECharacteristic* configStatus_=nullptr;
+  BLECharacteristic* configControl_=nullptr;
+  bool profileStorage_=false;
+  static constexpr uint16_t FRAME_HEADER_SIZE=11;
+  static constexpr uint8_t FRAG_MAGIC=0xA5;
+  static constexpr uint8_t FRAG_START=0x01;
+  static constexpr uint8_t FRAG_END=0x02;
+  static constexpr uint16_t MAX_PROFILE_BYTES=1536;
+  static constexpr uint16_t MAX_FRAME_BYTES=2048;
+  uint16_t expectedFragment_=0;
+  bool fragmentOpen_=false;
+  uint16_t activeTx_=0;
+  bool txOpen_=false;
+  uint16_t expectedChunk_=0;
+  uint32_t pendingRevision_=0;
+  uint32_t activeRevision_=0;
+  bool pendingReady_=false;
+  uint16_t pendingLength_=0;
+  char pendingDigest_[65]={};
+  char activeDigest_[65]={};
+  char stageData_[MAX_PROFILE_BYTES+1]={};
+  uint16_t stageSize_=0;
+  uint32_t stageAt_=0;
+  uint8_t frameBuffer_[MAX_FRAME_BYTES]={};
+  uint16_t frameSize_=0;
   
  Screen editReturn_=Screen::Controls,confirmReturn_=Screen::Settings;
   
@@ -359,6 +437,254 @@ private:
   
   }
  }
+ static uint16_t read16(const uint8_t* p){return (uint16_t(p[0])<<8)|uint16_t(p[1]);}
+ static void write16(uint8_t* p,uint16_t v){p[0]=uint8_t(v>>8);p[1]=uint8_t(v);}
+ static uint32_t read32(const uint8_t* p){return (uint32_t(p[0])<<24)|(uint32_t(p[1])<<16)|(uint32_t(p[2])<<8)|uint32_t(p[3]);}
+ static void write32(uint8_t* p,uint32_t v){p[0]=uint8_t(v>>24);p[1]=uint8_t(v>>16);p[2]=uint8_t(v>>8);p[3]=uint8_t(v);}
+ static bool copyString(char* out,size_t cap,const char* begin,const char* end){
+  if(!out||cap==0||!begin||!end||end<begin)return false;
+  size_t n=size_t(end-begin);
+  if(n>=cap)n=cap-1;
+  memcpy(out,begin,n);out[n]=0;return true;
+ }
+ const char* findToken(const char* src,const char* token){const char* p=strstr(src,token);return p?p+strlen(token):nullptr;}
+ bool parseQuoted(const char* from,char* out,size_t cap,const char** next=nullptr){
+  if(!from||*from!='"')return false;
+  const char* end=strchr(from+1,'"');
+  if(!end)return false;
+  if(!copyString(out,cap,from+1,end))return false;
+  if(next)*next=end+1;
+  return true;
+ }
+ SlotMode parseType(const char* type){
+  if(strcmp(type,"open_url")==0)return SlotMode::OpenUrl;
+  if(strcmp(type,"open_folder")==0)return SlotMode::OpenFolder;
+  if(strcmp(type,"builtin")==0)return SlotMode::Builtin;
+  if(strcmp(type,"open_app")==0||strcmp(type,"run_shortcut")==0)return SlotMode::Legacy;
+  return SlotMode::Unsupported;
+ }
+ void applyFallbackLabels(){
+  const char* apps[]={"CHROME","SPOTIFY","DISCORD","FILES","OBS","CODE"};
+  const char* actions[]={"SHOT","MUTE","LOCK","SEARCH","DESKTOP","TASKS"};
+  for(int i=0;i<6;i++){strncpy(s_.appLabel[i],apps[i],16);s_.appLabel[i][16]=0;s_.appMode[i]=SlotMode::Legacy;}
+  for(int i=0;i<6;i++){strncpy(s_.actionLabel[i],actions[i],16);s_.actionLabel[i][16]=0;s_.actionMode[i]=SlotMode::Builtin;}
+ }
+ bool parseProfileMetadata(const char* json){
+  if(!json)return false;
+  if(!strstr(json,"\"schema_version\":1"))return false;
+  applyFallbackLabels();
+  const char* groups[]={"\"apps\":[","\"actions\":["};
+  for(int g=0;g<2;g++){
+   const char* start=findToken(json,groups[g]);
+   if(!start)return false;
+   const char* cursor=start;
+   int count=0;
+   while(count<6){
+    const char* item=strstr(cursor,"{\"activation_id\"");
+    if(!item)break;
+    const char* slotPos=findToken(item,"\"slot\":");
+    const char* labelPos=findToken(item,"\"display_label\":\"");
+    const char* typePos=findToken(item,"\"type\":\"");
+    if(!slotPos||!labelPos||!typePos)return false;
+    int slot=atoi(slotPos);
+    if(slot<1||slot>6)return false;
+    char label[17]={0},type[20]={0};
+    const char* labelStart=labelPos;
+    const char* labelEnd=strchr(labelStart,'"');
+    if(!labelEnd||!copyString(label,sizeof(label),labelStart,labelEnd))return false;
+    const char* typeStart=typePos;
+    const char* typeEnd=strchr(typeStart,'"');
+    if(!typeEnd||!copyString(type,sizeof(type),typeStart,typeEnd))return false;
+    if(g==0){strncpy(s_.appLabel[slot-1],label,16);s_.appLabel[slot-1][16]=0;s_.appMode[slot-1]=parseType(type);}
+    else{strncpy(s_.actionLabel[slot-1],label,16);s_.actionLabel[slot-1][16]=0;s_.actionMode[slot-1]=parseType(type);}
+    count++;
+    cursor=typeEnd;
+   }
+   if(count!=6)return false;
+  }
+  return true;
+ }
+ static void simpleDigest(const uint8_t* data,size_t n,char out[65]){
+  uint8_t acc[32]={0};
+  for(size_t i=0;i<n;i++){acc[i%32]=uint8_t((acc[i%32]*33u)^data[i]^uint8_t(i));}
+  const char* hex="0123456789abcdef";
+  for(int i=0;i<32;i++){out[i*2]=hex[(acc[i]>>4)&0xF];out[i*2+1]=hex[acc[i]&0xF];}
+  out[64]=0;
+ }
+ bool saveActiveProfile(){
+  if(!profileStorage_)return false;
+  uint8_t active=profilePrefs_.getUChar("active",0);
+  uint8_t next=active==0?1:0;
+  char dataKey[8],lenKey[8],revKey[8],digKey[8];
+  snprintf(dataKey,sizeof(dataKey),"cfg%u",unsigned(next));
+  snprintf(lenKey,sizeof(lenKey),"len%u",unsigned(next));
+  snprintf(revKey,sizeof(revKey),"rev%u",unsigned(next));
+  snprintf(digKey,sizeof(digKey),"dig%u",unsigned(next));
+  bool ok=true;
+  ok=(profilePrefs_.putBytes(dataKey,stageData_,stageSize_)==stageSize_)&&ok;
+  ok=(profilePrefs_.putUInt(lenKey,stageSize_)>0)&&ok;
+  ok=(profilePrefs_.putUInt(revKey,pendingRevision_)>0)&&ok;
+  ok=(profilePrefs_.putString(digKey,pendingDigest_)>0)&&ok;
+  ok=(profilePrefs_.putUChar("active",next)>0)&&ok;
+  if(!ok)return false;
+  activeRevision_=pendingRevision_;
+  strncpy(activeDigest_,pendingDigest_,64);activeDigest_[64]=0;
+  s_.profileRevision=activeRevision_;
+  strncpy(s_.profileDigest,activeDigest_,64);s_.profileDigest[64]=0;
+  return true;
+ }
+ void loadActiveProfile(){
+  applyFallbackLabels();
+  if(!profileStorage_)return;
+  uint8_t active=profilePrefs_.getUChar("active",0);
+  char dataKey[8],lenKey[8],revKey[8],digKey[8];
+  snprintf(dataKey,sizeof(dataKey),"cfg%u",unsigned(active));
+  snprintf(lenKey,sizeof(lenKey),"len%u",unsigned(active));
+  snprintf(revKey,sizeof(revKey),"rev%u",unsigned(active));
+  snprintf(digKey,sizeof(digKey),"dig%u",unsigned(active));
+  uint32_t length=profilePrefs_.getUInt(lenKey,0);
+  if(length==0||length>MAX_PROFILE_BYTES)return;
+  size_t read=profilePrefs_.getBytes(dataKey,stageData_,length);
+  if(read!=length)return;
+  stageData_[length]=0;
+  stageSize_=uint16_t(length);
+  activeRevision_=profilePrefs_.getUInt(revKey,0);
+  String digest=profilePrefs_.getString(digKey,"");
+  if(digest.length()==64){strncpy(activeDigest_,digest.c_str(),64);activeDigest_[64]=0;}
+  else simpleDigest((const uint8_t*)stageData_,stageSize_,activeDigest_);
+  s_.profileRevision=activeRevision_;
+  strncpy(s_.profileDigest,activeDigest_,64);s_.profileDigest[64]=0;
+  parseProfileMetadata(stageData_);
+ }
+ void sendStatusFrame(uint8_t kind,uint16_t tx,uint16_t seq,const char* payload){
+  if(!configStatus_||!payload)return;
+  uint16_t payloadLen=uint16_t(strlen(payload));
+  if(FRAME_HEADER_SIZE+payloadLen>MAX_FRAME_BYTES)return;
+  uint8_t* out=frameBuffer_;
+  out[0]='R';out[1]='D';out[2]=1;out[3]=kind;
+  write16(out+4,tx);write16(out+6,seq);out[8]=0;write16(out+9,payloadLen);
+  memcpy(out+11,payload,payloadLen);
+  uint16_t total=FRAME_HEADER_SIZE+payloadLen;
+  uint16_t fragSeq=0;
+  for(uint16_t at=0;at<total;at+=16){
+   uint8_t packet[20]={0};
+   uint8_t flags=0;
+   if(at==0)flags|=FRAG_START;
+   uint16_t span=min<uint16_t>(16,total-at);
+   if(at+span>=total)flags|=FRAG_END;
+   packet[0]=FRAG_MAGIC;packet[1]=flags;write16(packet+2,fragSeq++);
+   memcpy(packet+4,out+at,span);
+   configStatus_->setValue(packet,4+span);
+   configStatus_->notify();
+   delay(2);
+  }
+ }
+ void ack(uint16_t tx,uint16_t seq){char payload[24];snprintf(payload,sizeof(payload),"{\"sequence\":%u}",unsigned(seq));sendStatusFrame(0x20,tx,seq,payload);}
+ void fail(uint16_t tx,const char* code){char payload[64];snprintf(payload,sizeof(payload),"{\"code\":\"%s\"}",code);sendStatusFrame(0x23,tx,0,payload);}
+ void abortConfig(const char* code){
+  txOpen_=false;
+  pendingReady_=false;
+  stageSize_=0;
+  if(code&&activeTx_)fail(activeTx_,code);
+  activeTx_=0;
+ }
+ void processConfigFrame(const uint8_t* frame,uint16_t n,uint32_t now){
+  if(n<FRAME_HEADER_SIZE)return;
+  if(frame[0]!='R'||frame[1]!='D'||frame[2]!=1)return;
+  uint8_t kind=frame[3];
+  uint16_t tx=read16(frame+4),seq=read16(frame+6),len=read16(frame+9);
+  if(FRAME_HEADER_SIZE+len!=n){fail(tx,"BAD_SCHEMA");return;}
+  char payload[512]={0};
+  size_t copy=min<size_t>(len,sizeof(payload)-1);
+  memcpy(payload,frame+11,copy);payload[copy]=0;
+  stageAt_=now;
+  if(kind==0x01){
+   char caps[120];
+   snprintf(caps,sizeof(caps),"{\"encrypted_write\":true,\"max_frame_payload\":20,\"max_profile_bytes\":%u,\"protocol_version\":1,\"schema_version\":1}",unsigned(MAX_PROFILE_BYTES));
+   sendStatusFrame(0x02,0,0,caps);
+   return;
+  }
+  if(kind==0x13){abortConfig(nullptr);ack(tx,0);return;}
+  if(kind==0x10){
+   activeTx_=tx;txOpen_=true;expectedChunk_=0;pendingReady_=false;stageSize_=0;
+   const char* revPos=findToken(payload,"\"revision\":");
+   const char* lenPos=findToken(payload,"\"length\":");
+   const char* digPos=findToken(payload,"\"digest\":\"");
+   if(!revPos||!lenPos||!digPos){fail(tx,"BAD_SCHEMA");abortConfig(nullptr);return;}
+   pendingRevision_=uint32_t(strtoul(revPos,nullptr,10));
+   pendingLength_=uint16_t(strtoul(lenPos,nullptr,10));
+   const char* end=strchr(digPos,'"');
+   if(!end||!copyString(pendingDigest_,sizeof(pendingDigest_),digPos,end)){fail(tx,"BAD_SCHEMA");abortConfig(nullptr);return;}
+   if(pendingLength_>MAX_PROFILE_BYTES){fail(tx,"TOO_LARGE");abortConfig(nullptr);return;}
+   if(strlen(pendingDigest_)!=64){fail(tx,"BAD_SCHEMA");abortConfig(nullptr);return;}
+   snprintf(s_.profileSession,sizeof(s_.profileSession),"%08lX%04X",unsigned long(pendingRevision_),unsigned(tx));
+   ack(tx,0);return;
+  }
+  if(!txOpen_||tx!=activeTx_){fail(tx,"BAD_SEQUENCE");return;}
+  if(kind==0x11){
+   if(seq!=expectedChunk_){fail(tx,"BAD_SEQUENCE");return;}
+   if(stageSize_+len>MAX_PROFILE_BYTES){fail(tx,"TOO_LARGE");abortConfig(nullptr);return;}
+   memcpy(stageData_+stageSize_,frame+11,len);stageSize_+=len;expectedChunk_++;
+   ack(tx,seq);return;
+  }
+  if(kind==0x12){
+   if(stageSize_!=pendingLength_){fail(tx,"BAD_SEQUENCE");abortConfig(nullptr);return;}
+   stageData_[stageSize_]=0;
+   char digest[65]={0};simpleDigest((const uint8_t*)stageData_,stageSize_,digest);
+   if(strcmp(digest,pendingDigest_)!=0){fail(tx,"BAD_DIGEST");abortConfig(nullptr);return;}
+   if(!parseProfileMetadata(stageData_)){fail(tx,"BAD_SCHEMA");abortConfig(nullptr);return;}
+   if(!saveActiveProfile()){fail(tx,"STORAGE_FAILED");abortConfig(nullptr);return;}
+   char applied[128];
+   snprintf(applied,sizeof(applied),"{\"digest\":\"%s\",\"revision\":%lu}",activeDigest_,unsigned long(activeRevision_));
+   sendStatusFrame(0x21,tx,seq,applied);
+   txOpen_=false;
+   pendingReady_=false;
+   return;
+  }
+  if(kind==0x14){
+   char readback[128];
+   snprintf(readback,sizeof(readback),"{\"digest\":\"%s\",\"revision\":%lu}",activeDigest_,unsigned long(activeRevision_));
+   sendStatusFrame(0x22,tx,0,readback);
+   return;
+  }
+  fail(tx,"BAD_SCHEMA");
+ }
+ void receiveConfig(uint32_t now){
+  RxPacket packet;
+  for(int budget=0;budget<32;budget++){
+   bool available=false;
+   portENTER_CRITICAL(&rxMux);
+   if(configTail!=configHead){packet=configQueue[configTail];configTail=(configTail+1)%32;available=true;}
+   portEXIT_CRITICAL(&rxMux);
+   if(!available)break;
+   if(packet.size<4||packet.data[0]!=FRAG_MAGIC)continue;
+   uint8_t flags=packet.data[1];
+   uint16_t seq=read16(packet.data+2);
+   if(flags&FRAG_START){fragmentOpen_=true;expectedFragment_=seq;frameSize_=0;}
+   if(!fragmentOpen_||seq!=expectedFragment_){fail(activeTx_,"BAD_SEQUENCE");fragmentOpen_=false;continue;}
+   expectedFragment_++;
+   uint16_t span=packet.size-4;
+   if(frameSize_+span>MAX_FRAME_BYTES){fragmentOpen_=false;fail(activeTx_,"TOO_LARGE");continue;}
+   memcpy(frameBuffer_+frameSize_,packet.data+4,span);frameSize_+=span;
+   if(flags&FRAG_END){fragmentOpen_=false;processConfigFrame(frameBuffer_,frameSize_,now);}
+  }
+ }
+ void configTick(uint32_t now){
+  if(txOpen_&&now-stageAt_>15000){fail(activeTx_,"TIMEOUT");abortConfig(nullptr);}
+ }
+ bool sendActivationEvent(bool apps,int slot){
+  if(!configStatus_||slot<1||slot>6)return false;
+  if(!s_.connected||s_.profileRevision==0||!s_.profileSession[0])return false;
+  char payload[220];
+  s_.activationSequence++;
+  snprintf(
+   payload,sizeof(payload),
+   "{\"event_sequence\":%u,\"group\":\"%s\",\"revision\":%lu,\"session_id\":\"%s\",\"slot\":%d}",
+   unsigned(s_.activationSequence),apps?"apps":"actions",unsigned long(s_.profileRevision),s_.profileSession,slot
+  );
+  sendStatusFrame(0x30,0,s_.activationSequence,payload);
+  return true;
+ }
  void linkTick(){
   bool linked=keyboard_.isConnected();
   if(linked==s_.connected)return;
@@ -379,7 +705,9 @@ private:
   
   if(!linked){portENTER_CRITICAL(&rxMux);
   rxTail=rxHead;
+  configTail=configHead;
   portEXIT_CRITICAL(&rxMux);
+  abortConfig("DISCONNECTED");
   }
   if(!linked){if(s_.advertising)BLEDevice::startAdvertising();
   else BLEDevice::stopAdvertising();
@@ -626,6 +954,12 @@ private:
   }
  void launch(){
   if(!ready())return;
+  SlotMode mode=s_.appMode[s_.app];
+  if(mode==SlotMode::OpenUrl||mode==SlotMode::OpenFolder){
+   if(sendActivationEvent(true,s_.app+1))note("HOST ACTIVATION SENT");
+   else note("SYNC UNAVAILABLE");
+   return;
+  }
   if(s_.app==3)chord(KEY_LEFT_GUI,'e');
   else{
    const uint8_t keys[]={KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F1};
@@ -638,6 +972,12 @@ private:
   
  }
  void action(){if(!ready())return;
+  SlotMode mode=s_.actionMode[s_.action];
+  if(mode==SlotMode::OpenUrl||mode==SlotMode::OpenFolder){
+   if(sendActivationEvent(false,s_.action+1))note("HOST ACTIVATION SENT");
+   else note("SYNC UNAVAILABLE");
+   return;
+  }
   switch(s_.action){case 0:chord(KEY_LEFT_GUI,'s',KEY_LEFT_SHIFT);
   break;
   case 1:keyboard_.write(KEY_MEDIA_MUTE);

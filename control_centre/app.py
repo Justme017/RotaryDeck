@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+import threading
 from time import time
 from pathlib import Path
 from model import TYPES, BUILTINS, ProfileError, validate, load_profile, save_profile, profile_folder, safe_stem, warnings, test_action
-from deck_sync import DeckSyncClient, SyncError, SyncUnsupportedError
+from deck_sync import DeckSyncClient, SyncError, SyncUnsupportedError, WinRTSyncTransport
 
 class Editor:
     def __init__(self, window):
@@ -15,6 +16,7 @@ class Editor:
         self.name = tk.StringVar()
         self.status = tk.StringVar(value='Local editor only. Device sync unavailable: no v2.3-capable firmware endpoint detected.')
         self.sync_transport = None
+        self.sync_in_progress = False
         window.title('RotaryDeck Control Centre - local editor')
         window.geometry('1100x650')
         window.minsize(920, 540)
@@ -71,22 +73,47 @@ class Editor:
             self.status.set('Unsaved edits. Device sync unavailable until a v2.3-capable deck endpoint is connected.')
 
     def refresh_sync_state(self):
-        self.sync_button.configure(state='normal' if self.sync_transport else 'disabled')
+        enabled = (self.sync_transport is not None) and (not self.sync_in_progress)
+        self.sync_button.configure(state='normal' if enabled else 'disabled')
 
     def sync_to_deck(self):
-        if not self.sync_transport:
+        if self.sync_in_progress:
+            return
+        if self.sync_transport is None and not self._try_open_transport():
             self.status.set('Device sync unavailable: connected firmware is missing required v2.3 capability endpoints.')
             return
         try:
             profile = self.collect()
+        except (OSError, ValueError) as exc:
+            self.status.set(f'Device sync failed: {exc}')
+            return
+        self.sync_in_progress = True
+        self.refresh_sync_state()
+        self.status.set('Sync in progress...')
+        thread = threading.Thread(target=self._sync_worker, args=(profile,), daemon=True)
+        thread.start()
+
+    def _try_open_transport(self):
+        try:
+            self.sync_transport = WinRTSyncTransport()
+            return True
+        except Exception:
+            self.sync_transport = None
+            return False
+
+    def _sync_worker(self, profile):
+        try:
             client = DeckSyncClient(self.sync_transport)
             revision = int(time())
             client.sync_profile(profile, revision)
-            self.status.set('Synced: APPLIED acknowledgement and readback digest matched.')
+            self.window.after(0, lambda: self.status.set('Synced: APPLIED acknowledgement and readback digest matched.'))
         except SyncUnsupportedError as exc:
-            self.status.set(f'Device sync unavailable: {exc}')
+            self.window.after(0, lambda: self.status.set(f'Device sync unavailable: {exc}'))
         except (SyncError, OSError, ValueError) as exc:
-            self.status.set(f'Device sync failed: {exc}')
+            self.window.after(0, lambda: self.status.set(f'Device sync failed: {exc}'))
+        finally:
+            self.sync_in_progress = False
+            self.window.after(0, self.refresh_sync_state)
 
     def discard(self):
         return not self.dirty or messagebox.askyesno('Unsaved edits', 'Discard unsaved edits?')
@@ -167,6 +194,11 @@ class Editor:
 
     def close(self):
         if self.discard():
+            if self.sync_transport and hasattr(self.sync_transport, 'close'):
+                try:
+                    self.sync_transport.close()
+                except Exception:
+                    pass
             self.window.destroy()
 
 if __name__ == '__main__':

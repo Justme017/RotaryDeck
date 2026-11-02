@@ -27,8 +27,25 @@ private:
  int32_t carouselOffset_=0,carouselFrom_=0;
  uint32_t carouselAt_=0,iconAt_=0;
  static constexpr uint32_t SLIDE_MS=250;
- const char* apps_[6]={"CHROME","SPOTIFY","DISCORD","FILES","OBS","CODE"};
- const char* actions_[6]={"SHOT","MUTE","LOCK","SEARCH","DESKTOP","TASKS"};
+ void clippedLabel(const char* source,char* out,size_t cap,int maxWidth,int slot){
+  if(!source||!source[0]){
+   snprintf(out,cap,"SLOT %d",slot);
+   return;
+  }
+  strncpy(out,source,cap-1);out[cap-1]=0;
+  if(lcd_.getStrWidth(out)<=maxWidth)return;
+  size_t n=strlen(out);
+  while(n>1){
+   out[n-1]=0;
+   const char* marker="...";
+   size_t room=strlen(out);
+   if(room>=3){out[room-3]='.';out[room-2]='.';out[room-1]='.';}
+   else strncpy(out,marker,cap-1);
+   out[cap-1]=0;
+   if(lcd_.getStrWidth(out)<=maxWidth)return;
+   n--;
+  }
+ }
  void clear(){lcd_.clearBuffer();lcd_.sendBuffer();}
  void normal(){lcd_.setFont(u8g2_font_5x7_tr);lcd_.setFontPosBaseline();}
  void small(){lcd_.setFont(u8g2_font_4x6_tr);lcd_.setFontPosBaseline();}
@@ -247,7 +264,10 @@ private:
   const int x[]={22,64,106},y[]={27,44};
   for(int i=0;i<6;i++){int cx=x[i%3],cy=y[i/3];lcd_.setDrawColor(1);
    if(i==selected)lcd_.drawBox(cx-19,cy-9,38,16);else lcd_.drawFrame(cx-19,cy-9,38,16);
-   lcd_.setDrawColor(i==selected?0:1);normal();const char* name=apps?apps_[i]:actions_[i];text(cx-lcd_.getStrWidth(name)/2,cy+2,name);
+   lcd_.setDrawColor(i==selected?0:1);normal();
+   char clipped[17]={0};
+   clippedLabel(apps?v_.appLabel[i]:v_.actionLabel[i],clipped,sizeof(clipped),34,i+1);
+   text(cx-lcd_.getStrWidth(clipped)/2,cy+2,clipped);
   }footer(v_.options.backDouble?"PRESS RUN DBL BACK":"PRESS RUN HOLD BACK");
  }
   void speaker(int x,int y,bool muted){

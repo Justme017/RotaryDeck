@@ -1,8 +1,11 @@
 import hashlib
+import queue
 import json
 import os
 import struct
+import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Protocol, Tuple
@@ -47,6 +50,11 @@ MAGIC = b'RD'
 
 LABEL_MAX_PIXELS = 72
 ELLIPSIS = '…'
+FRAGMENT_MAGIC = 0xA5
+FRAGMENT_HEADER = struct.Struct('!BBH')
+FRAGMENT_PAYLOAD_MAX = 20 - FRAGMENT_HEADER.size
+FRAGMENT_FLAG_START = 0x01
+FRAGMENT_FLAG_END = 0x02
 
 
 class SyncError(RuntimeError):
@@ -90,11 +98,55 @@ class Capabilities:
 class ReadbackState:
     revision: int
     digest: str
+    session_id: str = ''
 
 
 class SyncTransport(Protocol):
     def request(self, frame: bytes, timeout_seconds: float) -> bytes:
         ...
+
+
+class _FragmentAssembler:
+    def __init__(self):
+        self._expected = None
+        self._buffer = bytearray()
+
+    def push(self, packet: bytes) -> Optional[bytes]:
+        if len(packet) < FRAGMENT_HEADER.size:
+            raise SyncProtocolError('Fragment too short.')
+        magic, flags, sequence = FRAGMENT_HEADER.unpack(packet[:FRAGMENT_HEADER.size])
+        if magic != FRAGMENT_MAGIC:
+            raise SyncProtocolError('Fragment magic mismatch.')
+        if flags & FRAGMENT_FLAG_START:
+            self._expected = sequence
+            self._buffer = bytearray()
+        if self._expected is None:
+            raise SyncProtocolError('Fragment stream did not start.')
+        if sequence != self._expected:
+            raise SyncProtocolError(ERROR_BAD_SEQUENCE)
+        self._buffer.extend(packet[FRAGMENT_HEADER.size:])
+        self._expected = (self._expected + 1) & 0xFFFF
+        if flags & FRAGMENT_FLAG_END:
+            frame = bytes(self._buffer)
+            self._expected = None
+            self._buffer = bytearray()
+            return frame
+        return None
+
+
+def split_fragments(frame: bytes, sequence_start: int = 0) -> List[bytes]:
+    fragments = []
+    sequence = sequence_start & 0xFFFF
+    chunks = [frame[index:index + FRAGMENT_PAYLOAD_MAX] for index in range(0, len(frame), FRAGMENT_PAYLOAD_MAX)] or [b'']
+    for index, chunk in enumerate(chunks):
+        flags = 0
+        if index == 0:
+            flags |= FRAGMENT_FLAG_START
+        if index == len(chunks) - 1:
+            flags |= FRAGMENT_FLAG_END
+        fragments.append(FRAGMENT_HEADER.pack(FRAGMENT_MAGIC, flags, sequence) + chunk)
+        sequence = (sequence + 1) & 0xFFFF
+    return fragments
 
 
 class SyncCodec:
@@ -180,6 +232,146 @@ def prepare_payload(profile: Dict) -> Tuple[bytes, str]:
     return payload, digest
 
 
+class WinRTSyncTransport:
+    """Windows BLE transport for v2.3 config/control/status characteristics."""
+
+    def __init__(self, device_name: str = 'Rotary Deck'):
+        self.device_name = device_name
+        self._loop = None
+        self._device = None
+        self._service = None
+        self._control = None
+        self._status = None
+        self._token = None
+        self._queue: "queue.Queue[bytes]" = queue.Queue()
+        self._fragment_sequence = int.from_bytes(os.urandom(2), 'big')
+        self._guard = threading.Lock()
+
+    def request(self, frame: bytes, timeout_seconds: float) -> bytes:
+        if os.name != 'nt':
+            raise ConnectionError('Windows WinRT transport required for live deck sync.')
+        with self._guard:
+            if self._loop is None:
+                self._open()
+            self._queue = queue.Queue()
+            for fragment in split_fragments(frame, self._fragment_sequence):
+                self._write_fragment(fragment, timeout_seconds)
+                self._fragment_sequence = (self._fragment_sequence + 1) & 0xFFFF
+            assembler = _FragmentAssembler()
+            deadline = time.monotonic() + timeout_seconds
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError('Timed out waiting for status response.')
+                packet = self._queue.get(timeout=remaining)
+                maybe = assembler.push(packet)
+                if maybe is not None:
+                    return maybe
+
+    def close(self) -> None:
+        if self._loop is None:
+            return
+        try:
+            if self._status is not None and self._token is not None:
+                self._run(self._status.remove_value_changed(self._token), 5)
+        except Exception:
+            pass
+        for handle in (self._service, self._device):
+            try:
+                if handle is not None:
+                    handle.close()
+            except Exception:
+                pass
+        self._loop = None
+        self._device = self._service = self._control = self._status = self._token = None
+
+    def _open(self) -> None:
+        import asyncio
+        self._loop = asyncio.new_event_loop()
+        selector = self._run(self._find_selector(), 20)
+        self._device = self._run(self._open_device(selector), 20)
+        self._service, self._control, self._status = self._run(self._resolve_chars(), 20)
+        self._token = self._status.add_value_changed(self._on_status)
+        self._run(self._enable_notifications(), 10)
+
+    async def _find_selector(self):
+        from winrt.windows.devices.bluetooth import BluetoothLEDevice
+        from winrt.windows.devices.enumeration import DeviceInformation
+        selector = BluetoothLEDevice.get_device_selector_from_pairing_state(True)
+        devices = None
+        method = getattr(DeviceInformation, 'find_all_async_aqs_filter', None)
+        if method is not None:
+            devices = await method(selector)
+        if devices is None:
+            method = getattr(DeviceInformation, 'find_all_async_aqs_filter_and_additional_properties', None)
+            if method is not None:
+                devices = await method(selector, [])
+        if devices is None:
+            method = getattr(DeviceInformation, 'find_all_async', None)
+            if method is not None:
+                try:
+                    devices = await method(selector, [])
+                except TypeError:
+                    devices = await method(selector)
+        if devices is None:
+            raise ConnectionError('Windows DeviceInformation enumeration overloads unavailable.')
+        match = [d for d in devices if d.name.casefold() == self.device_name.casefold()]
+        if len(match) != 1:
+            raise ConnectionError('Could not resolve a unique paired Rotary Deck device.')
+        return match[0]
+
+    async def _open_device(self, info):
+        from winrt.windows.devices.bluetooth import BluetoothLEDevice
+        device = await BluetoothLEDevice.from_id_async(info.id)
+        if device is None:
+            raise ConnectionError('Unable to open paired deck device.')
+        return device
+
+    async def _resolve_chars(self):
+        from winrt.windows.devices.bluetooth import BluetoothCacheMode
+        from winrt.windows.devices.bluetooth.genericattributeprofile import GattCommunicationStatus
+        service_result = await self._device.get_gatt_services_for_uuid_with_cache_mode_async(uuid.UUID(CONFIG_SERVICE_UUID), BluetoothCacheMode.UNCACHED)
+        if service_result.status != GattCommunicationStatus.SUCCESS or len(service_result.services) != 1:
+            raise ConnectionError('v2.3 config service unavailable on this firmware.')
+        service = service_result.services[0]
+        control_result = await service.get_characteristics_for_uuid_with_cache_mode_async(uuid.UUID(CONFIG_CONTROL_UUID), BluetoothCacheMode.UNCACHED)
+        status_result = await service.get_characteristics_for_uuid_with_cache_mode_async(uuid.UUID(CONFIG_STATUS_UUID), BluetoothCacheMode.UNCACHED)
+        if control_result.status != GattCommunicationStatus.SUCCESS or len(control_result.characteristics) != 1:
+            raise ConnectionError('v2.3 control characteristic missing.')
+        if status_result.status != GattCommunicationStatus.SUCCESS or len(status_result.characteristics) != 1:
+            raise ConnectionError('v2.3 status characteristic missing.')
+        return service, control_result.characteristics[0], status_result.characteristics[0]
+
+    async def _enable_notifications(self):
+        from winrt.windows.devices.bluetooth.genericattributeprofile import GattClientCharacteristicConfigurationDescriptorValue, GattCommunicationStatus
+        result = await self._status.write_client_characteristic_configuration_descriptor_with_result_async(
+            GattClientCharacteristicConfigurationDescriptorValue.NOTIFY
+        )
+        if result.status != GattCommunicationStatus.SUCCESS:
+            raise ConnectionError('Unable to subscribe to v2.3 status notifications.')
+
+    def _on_status(self, sender, args):
+        if args is None or args.characteristic_value is None:
+            return
+        data = bytes(args.characteristic_value)
+        self._queue.put(data)
+
+    def _write_fragment(self, fragment: bytes, timeout_seconds: float) -> None:
+        from winrt.windows.storage.streams import DataWriter
+        from winrt.windows.devices.bluetooth.genericattributeprofile import GattWriteOption, GattCommunicationStatus
+        writer = DataWriter()
+        writer.write_bytes(fragment)
+        buffer = writer.detach_buffer()
+        writer.close()
+        result = self._run(self._control.write_value_with_result_and_option_async(buffer, GattWriteOption.WRITE_WITH_RESPONSE), timeout_seconds)
+        if result.status != GattCommunicationStatus.SUCCESS:
+            raise ConnectionError(f'GATT write failed: {result.status}')
+
+    def _run(self, operation, timeout: float):
+        import asyncio
+        return self._loop.run_until_complete(asyncio.wait_for(operation, timeout))
+
+
 class DeckSyncClient:
     def __init__(self, transport: SyncTransport, timeout_seconds: float = 3.0, retries: int = 1):
         self.transport = transport
@@ -249,7 +441,8 @@ class DeckSyncClient:
         raise SyncError('Sync failed.')
 
     def _sync_once(self, tx_id: int, revision: int, payload: bytes, digest: str, capabilities: Capabilities) -> ReadbackState:
-        begin = _canonical_json_bytes({'revision': revision, 'length': len(payload), 'digest': digest})
+        session_id = f'{revision:08x}{tx_id:04x}'
+        begin = _canonical_json_bytes({'revision': revision, 'length': len(payload), 'digest': digest, 'session_id': session_id})
         kind, response_tx, _, _, response_payload = self._exchange(SyncCodec.encode(FRAME_BEGIN, tx_id, 0, begin))
         self._expect_ack(kind, response_tx, tx_id, 0, response_payload)
 
@@ -274,14 +467,22 @@ class DeckSyncClient:
         applied = _decode_json(response_payload)
         if applied.get('revision') != revision or applied.get('digest') != digest:
             raise SyncProtocolError('APPLIED revision/digest mismatch.')
+        if 'session_id' in applied and applied.get('session_id') != session_id:
+            raise SyncProtocolError('APPLIED session mismatch.')
 
         kind, response_tx, _, _, response_payload = self._exchange(SyncCodec.encode(FRAME_READBACK_REQUEST, tx_id, 0))
         if kind != FRAME_READBACK or response_tx != tx_id:
             raise SyncProtocolError('Expected READBACK response.')
         readback = _decode_json(response_payload)
-        state = ReadbackState(revision=int(readback.get('revision', -1)), digest=str(readback.get('digest', '')))
+        state = ReadbackState(
+            revision=int(readback.get('revision', -1)),
+            digest=str(readback.get('digest', '')),
+            session_id=str(readback.get('session_id', session_id)),
+        )
         if state.revision != revision or state.digest != digest:
             raise SyncReadbackMismatchError('Readback mismatch.')
+        if state.session_id != session_id:
+            raise SyncReadbackMismatchError('Readback session mismatch.')
         return state
 
     def _cancel(self, tx_id: int) -> None:
