@@ -4,10 +4,11 @@ This is the end-to-end test for configurable app slots. It must pass before v2.3
 
 ## Preconditions
 
-- [ ] v2.2 firmware is installed and working.
+- [ ] v2.2.2 baseline firmware/companion source is available and inspected (release archive verified by SHA-256 before extraction).
 - [ ] Arduino-ESP32 is exactly 2.0.17.
 - [ ] The v2.3 Control Centre can load and save a profile.
-- [ ] Device sync is implemented only if firmware acknowledgement exists; otherwise it must clearly remain unavailable.
+- [ ] Device sync reports Synced only after APPLIED acknowledgement + matching revision/digest readback.
+- [ ] Existing telemetry packets (types 1 clock, 2 title, 3 media state, 4 volume/mute) remain working.
 
 ## Test steps
 
@@ -33,3 +34,10 @@ This is the end-to-end test for configurable app slots. It must pass before v2.3
 - [ ] Reconnection preserves the intended configured behaviour.
 - [ ] No automatic action runs during profile load, import, reconnect, or sync.
 - [ ] Existing media controls, telemetry, clock preference, and menus continue to work.
+
+## Required evidence to attach to PR
+
+- [ ] Exact command/output used for host tests (`py_compile`, `unittest`, host receiver tests).
+- [ ] Firmware compile command/output for XIAO ESP32-S3 with Arduino-ESP32 2.0.17.
+- [ ] Windows GUI notes/screenshot showing honest sync status transitions.
+- [ ] Real-device notes/video for deliberate activation and reconnect without stale replay.
