@@ -1,11 +1,34 @@
-Correction revision status: PENDING EXECUTION.
+# Control Centre verification
 
-This file documents the exact committed correction revision. It does not claim a passing result until the commands below have been run against this exact source.
+Source snapshot: feature/v2.3-control-centre at e0b52aef783f9ccbfed9f165844ae73777f8440f.
+The reconstructed model.py, app.py and test_model.py matched their Git blob SHA-1 values a3593a4fc195d3dd121b2f23e5da5feb129a0603, 64c3009e5a3dddbe6eeabeda552b0e236b2eca34 and f49d39dafc200a889a45a5e502a06ce39928bc82 respectively.
+Run in Python 3.12 Linux headless environment; not a Windows or hardware test.
 
-Run from control_centre:
-python -m py_compile model.py app.py test_model.py
-python -m unittest -v test_model.py
+Command: python -m py_compile model.py app.py test_model.py
+Exit code: 0
 
-Then perform a fresh Windows GUI smoke test: edit, save/reload, overwrite and inspect backup, reject invalid input, cancel unsaved navigation, deliberately open a URL/folder, and confirm Sync remains disabled.
+Command: python -m unittest -v test_model.py
+Exit code: 0
 
-Physical BLE sync, firmware compilation, NVS persistence, display rendering and deck activation are not implemented or tested by this editor suite.
+test_backup_retention (test_model.ProfileTests.test_backup_retention) ... ok
+test_bad_builtin (test_model.ProfileTests.test_bad_builtin) ... ok
+test_bad_labels (test_model.ProfileTests.test_bad_labels) ... ok
+test_bad_urls (test_model.ProfileTests.test_bad_urls) ... ok
+test_boolean_slot (test_model.ProfileTests.test_boolean_slot) ... ok
+test_default (test_model.ProfileTests.test_default) ... ok
+test_duplicate_json_keys (test_model.ProfileTests.test_duplicate_json_keys) ... ok
+test_duplicate_slots (test_model.ProfileTests.test_duplicate_slots) ... ok
+test_failed_replace (test_model.ProfileTests.test_failed_replace) ... ok
+test_good_url (test_model.ProfileTests.test_good_url) ... ok
+test_no_execution_on_load_save (test_model.ProfileTests.test_no_execution_on_load_save) ... ok
+test_requires_confirmation (test_model.ProfileTests.test_requires_confirmation) ... ok
+test_roundtrip (test_model.ProfileTests.test_roundtrip) ... ok
+test_unknown_fields (test_model.ProfileTests.test_unknown_fields) ... ok
+test_unsupported_execution (test_model.ProfileTests.test_unsupported_execution) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.019s
+
+OK
+
+A fresh Windows GUI smoke test of this exact source revision is still pending. BLE sync, firmware compilation, NVS persistence, display rendering and deck activation have not been implemented or tested by this suite.

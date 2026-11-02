@@ -15,12 +15,12 @@
 - [x] Draft deck-sync protocol and implementation plan.
 - [x] Replace all earlier placeholder commits with actual source and documents.
 - [x] Manually smoke-test the prior equivalent Windows Control Centre build.
+- [x] Run py_compile on the exact e0b52ae source snapshot: passed for model.py, app.py and test_model.py.
+- [x] Run the 15-test unittest suite on the exact e0b52ae source snapshot: passed.
+- [x] Record actual automated test output in control_centre/TEST_RESULTS.txt.
 
 ## Immediate
 
-- [ ] Run python -m py_compile model.py app.py test_model.py on the exact committed revision.
-- [ ] Run python -m unittest -v test_model.py on the exact committed revision.
-- [ ] Record the actual test output in TEST_RESULTS.txt.
 - [ ] Repeat the Windows GUI smoke test on this exact revision.
 - [ ] Confirm load, save/reload, overwrite backup, invalid-input rejection, unsaved-edit prompt, URL/folder test and disabled Sync.
 
@@ -40,7 +40,7 @@
 - [ ] Render configured labels using measured pixel width and supported truncation.
 - [ ] Emit deliberate slot-activation events.
 - [ ] Resolve URL and folder actions on Windows against the acknowledged revision.
-- [ ] Prevent duplicate activation events and prevent execution across reconnect.
+- [ ] Prevent duplicate activation events and execution across reconnect.
 - [ ] Keep existing HID media controls with exactly one execution path.
 - [ ] Pass the OBS-to-Netflix end-to-end acceptance test without recompiling firmware.
 

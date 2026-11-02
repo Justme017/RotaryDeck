@@ -9,10 +9,10 @@
 - [x] Local Control Centre source is committed: six Apps and six Actions, profile load/import, validation, local save/load, timestamped backups, unsaved-edit protection, and explicit URL/folder PC tests.
 - [x] Deck-sync protocol and implementation plan are drafted.
 - [x] The prior Windows Control Centre equivalent was manually smoke-tested by the owner.
+- [x] Exact source snapshot e0b52ae passes Python syntax compilation and all 15 automated model tests in a headless environment; see control_centre/TEST_RESULTS.txt.
 
 ## In progress
 
-- [ ] Execute the exact committed correction revision: py_compile and unittest.
 - [ ] Perform a fresh Windows GUI smoke test on this exact source revision.
 - [ ] Implement the host-side sync transaction codec and state machine.
 - [ ] Implement ESP32 configuration staging, validation, NVS/Preferences persistence, acknowledgement and readback.
