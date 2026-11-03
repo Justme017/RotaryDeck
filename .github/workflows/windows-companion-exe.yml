@@ -2,7 +2,7 @@ name: Windows companion EXE
 on:
   push:
     branches: ['feature/v2.3-control-centre']
-    paths: ['windows_app/**', '.github/workflows/windows-companion-exe.yml']
+    paths: ['windows_app/**', 'control_centre/**', '.github/workflows/windows-companion-exe.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,23 +16,32 @@ jobs:
         with:
           python-version: '3.11'
           architecture: x64
-      - name: Prepare existing v2.2 backend
+      - name: Prepare integrated app
         shell: pwsh
         run: |
           Copy-Item RotaryDeck_v2.2/companion/rotary_deck_sync.py windows_app/rotary_deck_sync.py
-          python -m pip install -r RotaryDeck_v2.2/companion/requirements.txt "pyinstaller>=6,<7"
+          Copy-Item RotaryDeck_v2.2/tools/apply_reconnect_patch.py windows_app/apply_reconnect_patch.py
+          Copy-Item control_centre/app.py windows_app/profile_editor.py
+          Copy-Item control_centre/model.py windows_app/model.py
+          Copy-Item control_centre/test_model.py windows_app/test_model.py
+          Copy-Item control_centre/profiles windows_app/profiles -Recurse -Force
+          python -m pip install -r RotaryDeck_v2.2/companion/requirements.txt "pyinstaller>=6,<7" "pillow>=10,<13"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Check imports and build single EXE
+      - name: Test and build single EXE
         shell: pwsh
         working-directory: windows_app
         run: |
-          python launcher.py --self-test
+          python make_icon.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name RotaryDeckCompanion --hidden-import rotary_deck_sync --collect-all winrt --collect-all pycaw --collect-all comtypes launcher.py
+          python -m unittest -v test_model.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python workbench.py --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name RotaryDeckCompanion --icon assets/rotarydeck.ico --add-data "assets;assets" --add-data "profiles;profiles" --hidden-import rotary_deck_sync --collect-all winrt --collect-all pycaw --collect-all comtypes workbench.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $process = Start-Process -FilePath .\dist\RotaryDeckCompanion.exe -ArgumentList '--self-test' -PassThru
           if (-not $process.WaitForExit(60000)) { $process.Kill(); throw 'EXE smoke test timed out' }
-          if ($process.ExitCode -ne 0) { throw 'EXE import smoke test failed' }
+          if ($process.ExitCode -ne 0) { throw 'EXE UI/import smoke test failed' }
           python -m pip freeze | Set-Content dist/build-dependencies.txt
           '${{ github.sha }}' | Set-Content dist/source-commit.txt
           Get-FileHash dist/RotaryDeckCompanion.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
