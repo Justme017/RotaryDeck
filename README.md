@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/branding/rotarydeck-banner.svg" alt="RotaryDeck — Your old printer display deserves a better job." width="100%">
+  <img src="assets/branding/rotarydeck-banner.svg" alt="Rotary Deck — Your old printer display deserves a better job." width="100%">
 </p>
 
-# RotaryDeck
+# Rotary Deck
 
 Repurpose an Ender 3 display into a Bluetooth DIY desktop controller: rotary navigation, animated menus, media controls and live Windows information.
 

@@ -1,4 +1,6 @@
-# RotaryDeck brand assets
+# Rotary Deck brand assets
+
+Display name: Rotary Deck (two words). Keep technical identifiers such as the RotaryDeck repository URL, archive names, application filenames, saved-profile directories and installer identity unchanged for compatibility.
 
 Original vector marks matching the companion's midnight/cyan palette. These are brand graphics, not device photographs or evidence of working hardware.
 
@@ -8,4 +10,4 @@ Original vector marks matching the companion's midnight/cyan palette. These are 
 
 Palette: midnight #0c1423, panel #162238, cyan #58d9e8, pale text #edf3fc, muted text #a6b6cd. Keep proportions, contrast and clear space intact. The project MIT licence covers these original graphics. No third-party logos or endorsements are implied.
 
-Adding these files changes README branding only. It does not change a GitHub account avatar, repository social-preview setting, Windows code-signing identity or repository visibility.
+Adding these files changes README branding only. It does not change a GitHub account avatar, repository social-preview setting, Windows code-signing identity or repository visibility. Application display labels need a separate development-branch update.
