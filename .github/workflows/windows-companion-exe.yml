@@ -11,8 +11,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           architecture: x64
@@ -25,9 +25,9 @@ jobs:
           Copy-Item control_centre/model.py windows_app/model.py
           Copy-Item control_centre/test_model.py windows_app/test_model.py
           Copy-Item control_centre/profiles windows_app/profiles -Recurse -Force
-          python -m pip install -r RotaryDeck_v2.2/companion/requirements.txt "pyinstaller>=6,<7" "pillow>=10,<13"
+          python -m pip install -r RotaryDeck_v2.2/companion/requirements.txt "pyinstaller>=6,<7" "pillow>=10,<13" "pystray>=0.19,<0.20"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Test and build single EXE
+      - name: Test and build desktop EXE
         shell: pwsh
         working-directory: windows_app
         run: |
@@ -35,19 +35,27 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m unittest -v test_model.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python workbench.py --self-test
+          python desktop.py --self-test
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name RotaryDeckCompanion --icon assets/rotarydeck.ico --add-data "assets;assets" --add-data "profiles;profiles" --hidden-import rotary_deck_sync --collect-all winrt --collect-all pycaw --collect-all comtypes workbench.py
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name RotaryDeckCompanion --version-file version_info.txt --icon assets/rotarydeck.ico --add-data "assets;assets" --add-data "profiles;profiles" --hidden-import rotary_deck_sync --hidden-import pystray._win32 --collect-all pystray --collect-all PIL --collect-all winrt --collect-all pycaw --collect-all comtypes desktop.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $process = Start-Process -FilePath .\dist\RotaryDeckCompanion.exe -ArgumentList '--self-test' -PassThru
           if (-not $process.WaitForExit(60000)) { $process.Kill(); throw 'EXE smoke test timed out' }
           if ($process.ExitCode -ne 0) { throw 'EXE UI/import smoke test failed' }
           python -m pip freeze | Set-Content dist/build-dependencies.txt
           '${{ github.sha }}' | Set-Content dist/source-commit.txt
-          Get-FileHash dist/RotaryDeckCompanion.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
           Copy-Item ../LICENSE dist/LICENSE.txt
           Copy-Item ../RotaryDeck_v2.2/THIRD_PARTY_NOTICES.md dist/THIRD_PARTY_NOTICES.md
-      - uses: actions/upload-artifact@v4
+      - name: Build per-user installer
+        shell: pwsh
+        working-directory: windows_app
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw 'Inno Setup compiler not available on this runner' }
+          & $iscc installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-FileHash dist/*.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
+      - uses: actions/upload-artifact@v6
         with:
           name: RotaryDeckCompanion-Windows-x64-preview
           path: windows_app/dist/
