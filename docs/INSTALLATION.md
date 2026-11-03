@@ -1,52 +1,52 @@
 # Installation and troubleshooting
 
-## Mandatory ESP32 core version
+Updated 2026-11-03. Windows companion previews and firmware archives are separate downloads. Keep your working firmware/library backup while testing candidate desktop builds.
 
-Install the esp32 board package by Espressif Systems at version 2.0.17 exactly. This is the Arduino-ESP32 board-support package, not the Arduino IDE version, firmware version or microcontroller model.
+## Windows desktop preview
 
-Current ESP32 releases support only 2.0.17. Do not choose latest, another 2.x version, or 3.x. Other versions are unsupported until the project intentionally upgrades and validates the BLE implementation. Creating or adopting a replacement BLE library alone does not establish compatibility; validation and an explicit support-policy update are required.
+1. Open [Windows companion EXE builds](https://github.com/Justme017/RotaryDeck/actions/workflows/windows-companion-exe.yml?query=branch%3Afeature%2Fv2.3-control-centre). Choose a successful run for the intended commit, not a queued/failed run.
+2. Download its RotaryDeckCompanion-Windows-x64-preview artifact while retained. Sign-in may be required. Extract the ZIP.
+3. If RotaryDeckSetup-Windows-x64-preview.exe is included, use it for installation/startup integration. The standalone RotaryDeckCompanion.exe is the application, not an installer. No separate Python/BAT environment is required for the packaged app.
+4. Installer target defaults to the current user's LocalAppData/Programs/RotaryDeck. Review the startup checkbox; it can be changed in Settings. Profiles remain under the user's saved locations.
+5. Stop older companion scripts/windows. Pair the deck in Windows, open Companion, enter its paired name or exact ID and click Start. Read the log; Starting does not prove connection.
 
-Select 2.0.17 in Arduino IDE's Boards Manager and check the installed version before compiling. Do not upgrade the core or switch BLE backends as a generic troubleshooting step. See [COMPATIBILITY.md](COMPATIBILITY.md).
+The desktop source is on the development branch. Feature inclusion depends on the exact artifact; newest installer/tray behavior still requires real Windows acceptance. The preview is unsigned. Publisher metadata alone does not establish trusted Windows signing. Do not disable security protection as a generic installation fix.
 
-## Supported archive platform
+## Tray, startup and exit
 
-All current version archives are for Seeed Studio XIAO ESP32-S3. nRF52840 is a future target, not a supported board in these downloads. Its eventual board/core requirements will be documented separately.
+Candidate desktop builds hide the window on close only after tray creation succeeds, with an initial notice. Tray menu: Open, Start bridge, Stop bridge, Exit. Exit checks unsaved profile edits and stops telemetry. Settings/About also offers Exit.
 
-## Firmware
+With startup enabled, the installed app launches in the tray and starts the bridge using the saved device selection. The setting can be disabled in the app or Windows Startup Apps. Startup configuration inside the app requires its expected installed location. Uninstall removes the app startup entry; user profiles/preferences are retained. Validate these paths on the exact installed build.
 
-1. Back up your working sketch and library files.
-2. Download the manually attached version ZIP from Releases and extract it.
-3. Open the .ino from its matching folder. Do not rename only the sketch or only the folder.
-4. Confirm Arduino-ESP32 is exactly 2.0.17. Use U8g2 and the matching BLE Keyboard dependencies; the current v2.2 setup uses T-vK ESP32 BLE Keyboard 0.3.0 with the local reconnect patch.
-5. If your release includes replacement DeckCore.h/DisplayUI.h headers, put them into the sketch folder.
-6. If it includes the BLE reconnect patch, apply it to the installed BLE Keyboard library, NOT the sketch folder. Back up that library outside Arduino's libraries directory to avoid duplicate copies. A fingerprint-checked patcher must not be forced onto an unfamiliar library version.
-7. Verify, then upload with your known-working board and port settings.
+## Local profiles and tools
 
-No universal connector pinout is provided here. Verify electrical connections against the actual board and selected source.
+Apps & Actions edits six slots per group locally. Loading/importing/saving/restoring never runs actions. Test on PC supports confirmed URLs/folders only. Restore default loads the bundled example; recover saved backups by importing them and using Save as. Profile editing does not currently change the physical deck.
 
-## Windows companion
+Tools diagnostics check dependencies/audio, not full BLE readiness. Reconnect patching requires the exact supported BleKeyboard.cpp/header fingerprints, an explicit target confirmation and backup. Close Arduino IDE first and rebuild/upload separately afterward. Do not force unfamiliar libraries or repeatedly patch a working setup.
 
-Use the companion supplied for the selected firmware. Stop older instances first. If included, run setup_companion.bat as a normal user; it creates a fresh local environment and installs requirements.txt. Then run start_companion.bat and leave its window open. Otherwise follow the archive's instructions.
+## Mandatory firmware platform/core
 
-The latest companion uses Windows Runtime APIs and Pycaw for default-output volume. Its environment must be installed locally; do not distribute .venv.
+Current firmware archives target Seeed Studio XIAO ESP32-S3. Install Espressif's Arduino-ESP32 board package at **exactly 2.0.17**, not a different 2.x/3.x version. This is the board package version, not IDE/app/firmware version. See [COMPATIBILITY.md](COMPATIBILITY.md). nRF52840 is unsupported by these images. Do not switch BLE backend/core as a generic fix.
 
-## Acceptance checks
+## Manual firmware installation
 
-- Confirm the installed Arduino-ESP32 core is 2.0.17.
-- Volume, mute, track and play/pause controls affect the PC.
-- PC time/media/volume telemetry arrives independently of HID commands.
-- Reconnection works after power cycles with the companion stopped and running.
-- Clock-format preference survives reboot.
-- Display menus, date, carousel and configured back gesture work.
+1. Back up working sketch and library files. Download the manually attached version ZIP from [Releases](https://github.com/Justme017/RotaryDeck/releases), not an automatic archive as a substitute for historical firmware.
+2. Preserve the matching .ino and folder names. In the consolidated v2.2 source these remain RotaryDeck_v2_1 intentionally.
+3. Keep known-working board/port settings, U8g2, T-vK ESP32 BLE Keyboard 0.3.0 and documented reconnect changes. Verify core 2.0.17 before compiling.
+4. Use the matching DeckCore.h/DisplayUI.h. Apply any required guarded library patch to the installed library, not the sketch, and avoid duplicate library copies.
+5. Verify then upload using Arduino tools. Preserve working wiring; firmware GPIO constants are not a universal display-connector pinout or voltage specification.
 
-## Troubleshooting
+The Firmware tab does not yet flash over USB: a validated compiled package, addresses/settings and real-board testing remain required. A source ZIP is not flashable firmware.
 
-- Check core 2.0.17 and the intended library folder before investigating compilation or BLE regressions.
-- COMMAND SENT only indicates a send attempt; verify that the PC responds.
-- Connected Bluetooth does not itself prove HID input is ready.
-- Missing telemetry: keep the companion window open and inspect its error/log.
-- Invalid parameter count: ensure the companion contains the enumeration and named GATT overload fixes.
-- Unknown volume is not zero volume; estimates should remain explicitly labelled.
-- Do not erase flash, disable encryption, or repeatedly re-pair as a generic fix. Record the actual error first.
+## Legacy script alternative
 
-Review logs before sharing: device IDs, media titles, usernames and local paths may be present.
+Use the companion matched to the firmware archive. In its companion folder, setup_companion.bat creates a local Python environment and installs requirements; start_companion.bat runs the telemetry bridge. Do not run this alongside the GUI bridge. Do not redistribute .venv.
+
+## Acceptance and troubleshooting
+
+- Verify actual volume/mute/track/play response, telemetry, menu/clock-format persistence and reconnect after power cycles with the bridge stopped/running.
+- COMMAND SENT is a send attempt, not execution acknowledgement. Bluetooth pairing does not itself prove HID or custom GATT readiness.
+- Missing telemetry: inspect the exact log, pairing/name/device selection and correct receiver firmware.
+- Audio errors: check the Windows default output endpoint. Unknown volume is not zero; media titles depend on app metadata.
+- Do not erase flash, disable encryption or repeatedly re-pair without an error-specific reason.
+- Review logs/screenshots before sharing: device IDs, titles, usernames and paths may be present.

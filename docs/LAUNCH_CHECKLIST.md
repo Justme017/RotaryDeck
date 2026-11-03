@@ -1,35 +1,45 @@
-# Public-launch checklist
+# Release and validation checklist
 
-Policy: remain private until the owner confirms readiness. Documentation, draft releases and an MIT file do not authorise a public launch.
+Updated 2026-11-03. The owner has made the repository public. Public visibility is established, not a claim that all release gates passed. This checklist now governs candidate acceptance and future releases; it does not require changing visibility back.
 
-## Required work
+Scope: Windows x64 + XIAO ESP32-S3, Arduino-ESP32 exactly 2.0.17 and the existing BLE backend. nRF52840, Linux and macOS are deferred, not mandatory completed ports for this preview.
 
-- [ ] Reviewed current source is available in a reproducible layout.
-- [ ] Windows companion has a usable configuration interface.
-- [ ] Apps and Actions are editable, tested and acknowledged by the deck.
-- [ ] Exact nRF52840 board selected and final firmware/device testing completed.
-- [ ] S3 and nRF52840 wiring diagrams independently verified.
-- [ ] Case CAD, printable files, test print and assembly instructions completed.
-- [ ] Real screen photos and feature GIFs captured; no mock-ups presented as working features.
-- [ ] README remains concise with a clear supported-platform table and detailed documentation links.
-- [ ] Linux and macOS implementation/testing completed, or explicitly deferred by the owner with unsupported status clearly documented.
+## Available source and documentation
 
-## Validation
+- [x] Public README has original branding, scope, download/source links and limitations.
+- [x] v2.2 source and Windows editor/desktop candidate are committed on feature/v2.3-control-centre.
+- [x] Local profile UI, tools, Help, installer/tray/startup definitions and build workflow are committed.
+- [ ] Verify latest actual EXE/installer build artifacts and record exact tested commit.
+- [ ] Resolve integration review findings/branch conflicts before merging implementation.
+- [ ] Reconcile modified firmware manifests and original baseline fingerprints.
 
-- [ ] Clean firmware build/install and clean companion installation tested.
-- [ ] Slot editing, target validation, profile persistence and device-label sync tested.
-- [ ] Interrupted sync retains the previous valid configuration.
-- [ ] Power cycles and reconnects tested with companion stopped and running.
-- [ ] No queued launch actions replay after reconnection.
-- [ ] Current functionality and proposed functionality are clearly distinguished.
+## Windows desktop acceptance
 
-## Packaging and permissions
+- [ ] Fresh Windows install/start, uninstall and retained-profile behavior tested.
+- [ ] Tray creation, hide/reopen, Start/Stop/Exit and duplicate-instance behavior tested.
+- [ ] Startup checkbox/toggle, quoted installed path, login launch and removal tested.
+- [ ] Saved device selection and dependency/audio diagnostics tested.
+- [ ] Local profile validation/import/save/backups/default restore and unsaved-edit prompts tested.
+- [ ] Confirmed URL/folder tests and cancel paths tested with no unintended execution.
+- [ ] Unsigned-preview and unavailable-sync/update messages remain honest.
 
-- [ ] Archives contain the intended source, companion and required patch instructions.
-- [ ] No .venv, caches, credentials, private logs or unnecessary personal paths.
-- [ ] Release tags, attachments and descriptions match the intended versions.
-- [ ] Third-party redistribution permissions/notices reviewed; root MIT is not used to relicense upstream code.
-- [ ] Open-source download provides the actual editable project source, not documentation-only automatic archives.
-- [ ] Owner explicitly approves publication and repository visibility change.
+## Firmware and integration acceptance
 
-No existing workflow should be interpreted as approval to publish. Hardware validation and OS support must be reported as actually tested, not assumed.
+- [ ] Exact-core clean firmware build with intended dependencies and reconnect patch recorded.
+- [ ] Actual firmware/host codec agreement, strict staging and failure-path tests pass.
+- [ ] Durable APPLIED plus matching revision/digest/session readback confirmed.
+- [ ] Interrupted sync/storage failure retains the previous valid active configuration.
+- [ ] Power cycles/reconnects retain state and never replay actions.
+- [ ] Configured labels/activation and OBS-to-Netflix end-to-end acceptance pass.
+- [ ] USB updater remains disabled until board-specific compiled package/flash layout/integrity checks and real-device recovery testing exist.
+
+## Hardware and packaging
+
+- [ ] Verify exact display PCB, connector orientation, electrical wiring and power arrangement.
+- [ ] Complete measurements, enclosure CAD/print fit and assembly instructions.
+- [ ] Capture genuine hardware photos/GIFs; no generated images used as evidence.
+- [ ] Review public history, build outputs and screenshots for secrets/private logs; deleting current files is not a history purge.
+- [ ] Package editable source, dependency/patch instructions, licences and accurate checksums without caches/venvs/private logs.
+- [ ] Release names, tags, attachments and descriptions match; no archive-comparison assumptions.
+- [ ] Obtain signing identity and test signatures if signing is introduced; publisher metadata alone is not signing.
+- [ ] Owner explicitly approves each future stable release/publication. A successful workflow or completed agent session is not that approval.

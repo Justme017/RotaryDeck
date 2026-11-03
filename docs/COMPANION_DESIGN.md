@@ -1,66 +1,37 @@
-# Configurable companion — proposed design
+# Companion — preview implementation and remaining design
 
-Status: requirements and design only. No graphical editor, dynamic slot protocol or cross-platform implementation is added by this document. The existing Windows sync script and fixed firmware actions remain the baseline.
+Updated 2026-11-03. This is no longer a design-only project. The local editor and Windows desktop candidate are committed on [feature/v2.3-control-centre](https://github.com/Justme017/RotaryDeck/tree/feature/v2.3-control-centre). Main holds public documentation; it does not imply that development code is merged or validated.
 
-## User outcome
+## Current desktop candidate
 
-A user can select an Apps slot labelled OBS, rename it NETFLIX, choose Open website, enter https://www.netflix.com, test it deliberately, then Save & Sync. The device label and action change together without recompiling firmware. The same editor configures Actions slots such as screenshot, mute or show desktop.
+- Companion: Start/Stop around existing v2.2 Windows clock/media/default-output volume telemetry.
+- Apps & Actions: six slots each; local JSON profiles, label/type/target validation, save/import/default restore, overwrite backups and unsaved-edit protection.
+- Test on PC: confirmed URLs/folders only. open_app, run_shortcut and built-in profile entries are not arbitrary working PC execution in this build.
+- Tools: dependency/audio diagnostics and the existing fingerprint-guarded reconnect-library patcher, with confirmation and backup.
+- Help: searchable offline usage, FAQs, safety and limitations.
+- Desktop integration: tray controls, close-to-tray notice, startup setting, stored device selection, duplicate-instance guard, per-user installer and GitHub/About metadata.
+- Firmware tab: explicitly disabled until a verified flashable package exists.
 
-## Initial scope
+Source implementation is not the same as a tested installer, successful Bluetooth connection or complete deck integration. Latest desktop candidate source: c133ed901cfc70cd2c8322ef8b02407840a2a9b2. Firmware v2.2/v2.3 is separate from companion 0.3.0-preview.
 
-Retain six Apps slots and six Actions slots. Variable page lengths, custom bitmap uploads and arbitrary scripts are later proposals, not first-iteration requirements.
+## Still-required user outcome
 
-Proposed action types:
-- Open an application using a selected executable and structured arguments.
-- Open a validated http/https website in the default browser.
-- Open a selected folder.
-- Send an explicitly configured keyboard shortcut.
-- Execute a selected built-in media/system action.
+Replace an OBS slot with NETFLIX, intentionally test the website, apply the profile with durable device acknowledgement/readback, see the new label on the deck and activate it exactly once without recompiling firmware. Only the local editing/testing portion is available in the preview; physical-deck profile sync remains unavailable.
 
-## Proposed interface
+## Integration contract to complete
 
-- Device status: connection, sync state, firmware/protocol version and last error.
-- Apps and Actions: slot list with device-length label preview.
-- Editor: label, action type, target and argument fields appropriate to that type.
-- Test on PC: explicit local action with confirmation where appropriate.
-- Save & Sync: validate, save the host profile and apply device configuration.
-- Profiles: create, select, export/import and restore defaults. Imported profiles are inert until reviewed and applied.
+1. Capability negotiation and bounded versioned transfer.
+2. Identical standard digest computation in host and actual firmware, not merely a compatible Python fake receiver.
+3. Strict isolated candidate validation; no mutation of active mappings before durable commit.
+4. Recoverable storage generation selection and matching APPLIED/revision/digest/session readback.
+5. One coordinated Windows connection owner for telemetry, config responses and activation events.
+6. Live-session activation binding, stale/duplicate rejection and disconnect invalidation.
+7. Measured display widths and explicit configured built-in semantics, with no unsafe legacy fallback.
 
-Only show Synced after a matching device acknowledgement. Distinguish host profile saved, device sync pending, and device sync failed.
+The companion keeps PC paths/URLs on the host and resolves only approved local mappings; the deck receives bounded labels/identities. Existing telemetry UUIDs/types and working HID/reconnect behavior must remain compatible. No shell scripts or arbitrary command text execution is authorised.
 
-## Responsibilities
+## Safety and acceptance
 
-The companion stores PC-specific application paths, website targets, arguments and OS-specific action implementations. The device stores bounded labels, slot identities, configuration revision and presentation information. It sends slot activation events rather than interpreting arbitrary PC command strings.
+Never execute actions during load/import/save/sync/boot/retry/reconnect. Synced requires durable APPLIED and matching readback, not GATT write success. Confirm sensitive PC tests and exact patch targets. USB updating must use verified board-specific images/settings and never a guessed offset. Publisher text is not code signing.
 
-Keep basic media HID controls independent where practical. Companion-managed slots must show an unavailable status if the companion is absent; do not silently invoke a different action.
-
-## Protocol work required
-
-The current time/media/volume path does not itself implement custom slot activation. A matched firmware/companion revision must define:
-- Protocol/capability negotiation.
-- Stable page/slot identities and configuration revisions.
-- Bounded, validated configuration transfer with staging and an explicit commit.
-- Acknowledgement/error responses and rollback to the last valid configuration.
-- Device-to-host activation events with session identifiers and duplicate suppression.
-- Reconnect reconciliation without replaying old launch events.
-
-Do not change the working packet formats or UUIDs merely by documenting this proposal. Concrete encoding, size limits and firmware storage strategy require review during implementation.
-
-## Safety and portability
-
-Treat an authenticated paired device as an input source, not permission to run arbitrary shell text. Resolve only actions in the locally approved active profile. Separate executable paths and arguments; disable arbitrary script execution for the first iteration. Validate labels, URLs, paths and profile sizes.
-
-Display destructive or security-sensitive action confirmation on the PC where needed. Do not block the firmware loop waiting for user confirmation. Test imports, missing targets, interrupted sync, disconnects, duplicate events and acknowledgement loss.
-
-Share the profile model and controller logic across OS backends, not assumptions about executable paths or shortcuts. Windows is the next implementation target; Linux and macOS remain unimplemented until their backends and permissions are tested.
-
-## Acceptance scenario
-
-1. Replace OBS with NETFLIX through the editor.
-2. Test intentionally and confirm the intended website opens.
-3. Save & Sync; receive acknowledgement and see NETFLIX on the device.
-4. Activate the slot and open the configured target exactly once.
-5. Reconnect/restart without replaying an activation.
-6. Interrupt a later configuration update and retain the previous valid configuration.
-
-Implementation, code framework selection and hardware/OS validation are subsequent tasks.
+Required evidence: model/sync tests, actual firmware receiver integration, exact Arduino-ESP32 2.0.17 build, clean Windows install, tray/startup/uninstall tests, real BLE reconnect, interrupted transfers, power-loss persistence and OBS-to-Netflix acceptance. Existing reports apply to their recorded revision, not automatically to later edits. Linux/macOS/nRF52840 remain deferred.

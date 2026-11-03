@@ -1,12 +1,31 @@
 # Changelog
 
-This records archive provenance and changes established during development. Original development dates and historical Git commits have not been reconstructed. All listed archives target XIAO ESP32-S3.
+Updated 2026-11-03. Historical sections record archive provenance, not reconstructed original commit dates. Firmware versions and desktop app versions are separate. Items under Unreleased describe committed development source, not a published stable firmware/app release.
 
-## Unreleased — nRF52840 roadmap
+## Unreleased — Windows desktop preview / v2.3 development
 
-- Planned migration of the final version to nRF52840.
-- Exact board, pin mapping, firmware architecture and release version are not yet defined.
-- No supported nRF52840 build is available.
+### Added
+- Owner-provided v2.2 firmware, display, Windows companion, guarded reconnect patcher and baseline tests imported into RotaryDeck_v2.2/ on feature/v2.3-control-centre.
+- Local six-Apps/six-Actions profile editor with validation, import/save/default restore, unsaved-edit protection and timestamped overwrite backups.
+- Explicit confirmed URL/folder PC tests; other profile types are not implemented PC execution in this preview.
+- Windows graphical telemetry bridge and single-EXE packaging workflow. The owner reported the earlier basic app launches.
+- Unified Companion / Apps & Actions / Tools interface, original dial logo and application icon.
+- Desktop candidate 0.3.0-preview: searchable offline Help, Settings/About and GitHub link, saved device selection, tray controls, startup option and duplicate-instance guard.
+- Per-user installer definition, startup registration/removal and publisher/version metadata. These builds remain unsigned.
+- Disabled Firmware tab explaining that no validated flashable update package is bundled.
+- Integration audit documenting digest/readback/staging/session/storage/routing and provenance issues; completion and acceptance remain pending.
+
+### Changed
+- Public repository README and midnight/cyan brand assets updated on main. The owner made the repository public; this did not certify a stable product.
+- Windows candidate build workflow updated to Node 24 action versions: checkout v5, setup-python v6 and upload-artifact v6.
+- Current desktop scope clarified as Windows x64 + XIAO ESP32-S3; nRF52840/Linux/macOS remain future work.
+
+### Status and version references
+- Unified UI source: 46290dab81c89886545ad3709c30d0e23792162b.
+- Desktop/installer candidate: c133ed901cfc70cd2c8322ef8b02407840a2a9b2.
+- Public branding: dd3d28225dbcc72ea02043d2c0ae83855d81221c.
+- Build definitions and smoke checks are committed; latest build success, installer/tray/startup runtime and real-device acceptance are not asserted by this changelog.
+- Local profiles do not yet configure the deck. USB flashing, trusted code signing and validated end-to-end profile transfer remain unavailable.
 
 ## v2.2 — ESP32-S3 development line
 
@@ -25,9 +44,10 @@ This records archive provenance and changes established during development. Orig
 - BLE Keyboard reconnect candidate restores local notification flags and clears stale report state; releaseAll also sends media release. Reconnect success is user-reported on the owner's hardware.
 
 ### Packaging status
-- The development work was distributed across a volume-sync package, dashboard/date replacement headers and a reconnect-library patch.
-- Verify the final uploaded ZIP includes or documents all required components.
-- No newly composed package is declared hardware-verified solely by these notes.
+- The development work was distributed across volume-sync, dashboard/date and reconnect-patch components, later consolidated as source.
+- The v2.2 release is published. Its uploaded RotaryDeck_v2.2.2.zip is a renamed v2.2 archive according to the owner, not a separately established v2.2.2 firmware release.
+- Baseline source is now committed on the development branch. Original archive provenance and checksums must remain distinct from modified v2.3 files.
+- Publication and source consolidation do not constitute a fresh full firmware/Windows/hardware validation.
 
 ## v2.1 — historical ESP32-S3 snapshot
 
@@ -54,4 +74,4 @@ This records archive provenance and changes established during development. Orig
 
 ## Provenance
 
-Archive classifications come from the inventory prepared in Justme017/deck-zips- at commit 0049669c3c1d42fce29d30aaebaa0c6befcc6ef5. These notes are not a reconstruction of original release dates. Current GitHub drafts remain unpublished until reviewed by the owner.
+Historical archive classifications originate from the inventory in Justme017/deck-zips- at commit 0049669c3c1d42fce29d30aaebaa0c6befcc6ef5. Historical tags index archives and can point to the same repository commit; tag comparisons do not compare release-attachment ZIP contents. Original development dates are not reconstructed. Check each release's actual publication and assets rather than treating all releases as drafts.
