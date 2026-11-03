@@ -1,38 +1,55 @@
+<p align="center">
+  <img src="assets/branding/rotarydeck-banner.svg" alt="RotaryDeck — Your old printer display deserves a better job." width="100%">
+</p>
+
 # RotaryDeck
 
-### Your old printer display deserves a better job.
+Repurpose an Ender 3 display into a Bluetooth DIY desktop controller: rotary navigation, animated menus, media controls and live Windows information.
 
-Repurpose an Ender 3 display into a wireless DIY stream deck: animated menus, a rotary encoder, media controls, and live PC information.
+[📦 Firmware downloads](https://github.com/Justme017/RotaryDeck/releases) · [🖥 Windows preview builds](https://github.com/Justme017/RotaryDeck/actions/workflows/windows-companion-exe.yml?query=branch%3Afeature%2Fv2.3-control-centre) · [📖 Build guide](docs/INSTALLATION.md) · [🐛 Report an issue](https://github.com/Justme017/RotaryDeck/issues)
 
-> REQUIRED: Arduino-ESP32 board package 2.0.17 exactly. Do not upgrade the ESP32 core for current releases. Other core versions are unsupported until the BLE implementation is deliberately migrated and validated. See [compatibility policy](docs/COMPATIBILITY.md).
+> Public development project, not a fully validated plug-and-play product. Current ESP32 releases require Arduino-ESP32 **exactly 2.0.17**. Do not upgrade the core or change the BLE backend without deliberate migration and validation. [Compatibility policy](docs/COMPATIBILITY.md).
 
-Private work in progress. No public launch until the [launch checklist](docs/LAUNCH_CHECKLIST.md) is reviewed and completed.
+## What it does
 
-## Current prototype
+- 🎛 Rotary-encoder navigation with animated carousel menus.
+- 🎵 Bluetooth HID media controls and firmware-defined shortcuts.
+- 🕒 Windows clock, media and output-volume telemetry; dashboard date and saved 12/24-hour setting.
+- ♻️ Gives an existing printer display a second life.
 
-- Animated carousel and encoder navigation.
-- Bluetooth media controls and firmware-defined shortcuts.
-- Windows time, media and output-volume sync.
-- Dashboard date and saved 12/24-hour clock setting.
-- Reconnect patch reported working on the owner's device.
+## Windows companion preview
 
-| Platform | Status |
+The [development branch](https://github.com/Justme017/RotaryDeck/tree/feature/v2.3-control-centre) contains the unified companion, local Apps & Actions editor and guarded utilities. New candidate builds add Help, tray/startup controls and an installer. Build availability and behavior must be checked for the exact downloaded commit.
+
+1. Open [Windows companion EXE builds](https://github.com/Justme017/RotaryDeck/actions/workflows/windows-companion-exe.yml?query=branch%3Afeature%2Fv2.3-control-centre).
+2. Select a successful run and download its `RotaryDeckCompanion-Windows-x64-preview` artifact while available. GitHub may require sign-in; artifacts have limited retention.
+3. Use the installer if included, or run the companion EXE. Keep your existing working firmware and stop older companion processes first.
+
+Preview binaries are unsigned. Publisher metadata is not a trusted digital signature. Local profile editing does not yet configure the physical deck: deck profile sync and one-click USB firmware updates remain unavailable. Do not treat a successful build as Windows/BLE/hardware acceptance.
+
+## Supported scope
+
+| Component | Current status |
 |---|---|
-| XIAO ESP32-S3 | Current v1.0–v2.2 archives; Arduino-ESP32 2.0.17 required |
-| nRF52840 | Planned final hardware; port and exact board pending |
-| Windows | Existing sync script; graphical configuration app pending |
-| Linux / macOS | Not implemented or supported yet |
+| XIAO ESP32-S3 | Current firmware target; Arduino-ESP32 2.0.17 required |
+| Windows x64 | v2.2 telemetry companion; unified graphical app under development |
+| Editable Apps & Actions | Local editor; physical-deck profile transfer not enabled in the preview |
+| nRF52840 | Future work; do not flash ESP32 images to this board |
+| Linux / macOS | Not implemented or supported |
 
-## Next
+## Source and firmware
 
-Editable Apps and Actions from the companion, including replacing a slot such as OBS with Netflix—without recompiling firmware. This is planned, not available in the current archives.
+- [Published firmware archives](https://github.com/Justme017/RotaryDeck/releases): download the manually attached version ZIP, not automatic Source code archives as a substitute for historical firmware.
+- [Committed v2.2 baseline](https://github.com/Justme017/RotaryDeck/tree/feature/v2.3-control-centre/RotaryDeck_v2.2) and [Windows app source](https://github.com/Justme017/RotaryDeck/tree/feature/v2.3-control-centre/windows_app) are on the development branch.
+- Historical version tags index release archives and may point to the same commit; GitHub tag comparison does not compare uploaded ZIP contents.
+- Archive contents and hardware coverage vary. Verify the exact display PCB, connector orientation, wiring and required patches before another build.
 
-Also pending: enclosure, verified wiring diagrams for both boards, real screen photos/GIFs, and final validation. Verify the exact display PCB; Ender 3/V3 naming does not guarantee pin compatibility.
+## Roadmap and documentation
 
-[Build guide](docs/INSTALLATION.md) · [Downloads](https://github.com/Justme017/RotaryDeck/releases) · [Changelog](CHANGELOG.md)
+Physical-deck profile sync, validated USB firmware updating, enclosure, verified wiring diagrams, real device photos/GIFs and final acceptance testing remain work in progress.
 
-[Roadmap](ROADMAP.md) · [Companion design](docs/COMPANION_DESIGN.md) · [Contributing](CONTRIBUTING.md)
+[Installation](docs/INSTALLATION.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Release gates](https://github.com/Justme017/RotaryDeck/blob/feature/v2.3-control-centre/docs/LAUNCH_CHECKLIST.md)
 
-Use manually uploaded firmware ZIPs, not automatic Source code archives. Editable firmware is not yet imported into main; archive contents and test coverage vary. Do not flash ESP32 builds to nRF52840.
+## Credits and licence
 
-[MIT](LICENSE) covers original maintainer-owned work only; see [third-party licensing](docs/LICENSING.md). Independent project, not affiliated with Creality or Elgato.
+Created by [Shubham Mehta / Justme017](https://github.com/Justme017). [MIT](LICENSE) applies to original maintainer-owned work and original brand graphics only; [third-party licensing](docs/LICENSING.md) remains separate. Independent project, not affiliated with Creality or Elgato.

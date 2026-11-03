@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+<title id="title">RotaryDeck logo</title><desc id="desc">A cyan rotary arc, pale dial and three navigation dots on midnight blue.</desc>
+<rect width="256" height="256" rx="52" fill="#0c1423"/>
+<rect x="12" y="12" width="232" height="232" rx="44" fill="#162238"/>
+<path d="M71 185 A80 80 0 1 1 185 185" fill="none" stroke="#58d9e8" stroke-width="15" stroke-linecap="round"/>
+<circle cx="128" cy="128" r="42" fill="#edf3fc"/>
+<path d="M128 128 L151 105" stroke="#162238" stroke-width="12" stroke-linecap="round"/>
+<g fill="#58d9e8"><circle cx="100" cy="211" r="4"/><circle cx="128" cy="211" r="4"/><circle cx="156" cy="211" r="4"/></g>
+</svg>
